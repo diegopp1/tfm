@@ -1,7 +1,7 @@
 # README TFM
 This is a document to explain deeply how was the deployment of an open source IoT cloud deployed.
 
-First of all, I created a project in Python so I could carry on with some scripts that explain how I managed to integrate Kafka, the tool that is going to be used as the middleware (between my IoT devices and the frontend app), into my project (by building a client application which will consume and produce messages from an Apache Kafka cluster). 
+First of all, I created a project in Python so I could carry on with some scripts that explain how I managed to integrate Kafka, the tool that is going to be used as the middleware (Publish/Subscribe highly scalable messaging system, between my IoT devices and the frontend), into my project (by building a client application which will consume and produce messages from an Apache Kafka cluster). 
 
 Kafka will allow me to administrate consumers and producers using a key-value pair messaging. More info below:  
 Kafka uses the abstraction of a distributed log that consists of partitions. Splitting a log into partitions allows to scale-out the system.
