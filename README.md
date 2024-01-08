@@ -8,6 +8,6 @@ Kafka uses the abstraction of a distributed log that consists of partitions. Spl
 _"Keys are used to determine the partition within a log to which a message get's appended to. While the value is the actual payload of the message. The examples are actually not very "good" with this regard; usually you would have a complex type as value (like a tuple-type or a JSON or similar) and you would extract one field as key: https://stackoverflow.com/questions/40872520/whats-the-purpose-of-kafkas-key-value-pair-based-messaging"_
 
 After I successfully created my project in Python, I had to install several libraries in my environment (env):  
-1. confluent-kafka
+1. confluent-kafka: This Python client provides a high-level producer, consumer, and AdminClient that are compatible with Kafka brokers (version 0.8 or later), Confluent Cloud, and Confluent Platform: https://docs.confluent.io/kafka-clients/python/current/overview.html
 2. confluent-kafka [avro]
 3. CoAPTthon3
