@@ -11,3 +11,4 @@ After I successfully created my project in Python, I had to install several libr
 1. confluent-kafka: This Python client provides a high-level producer, consumer, and AdminClient that are compatible with Kafka brokers (version 0.8 or later), Confluent Cloud, and Confluent Platform: https://docs.confluent.io/kafka-clients/python/current/overview.html
 2. confluent-kafka [avro]
 3. CoAPTthon3
+Tutorial: https://developer.confluent.io/get-started/python/
