@@ -3,7 +3,7 @@ version: "3.7"
 services:
   # Zookeeper service for Kafka synchronization
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.0.1
+    image: confluentinc/cp-zookeeper:7.1.0
     hostname: zookeeper
     container_name: zookeeper
     ports:
@@ -14,7 +14,7 @@ services:
 
   # Kafka Broker
   broker:
-    image: confluentinc/cp-kafka:7.0.1
+    image: confluentinc/cp-kafka:7.1.0
     hostname: broker
     container_name: broker
     depends_on:
@@ -53,8 +53,11 @@ services:
     depends_on:
       - broker
     ports:
-      - "2521:2522"
+      - "8081:8081"
     environment:
       SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: "zookeeper:2181"
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:2522
+      SCHEMA_REGISTRY_KAFKA_BOOTSTRAP_SERVERS: "broker:29092"  # Agrega esta línea con la dirección del broker Kafka y su puerto
+      SCHEMA_REGISTRY_KAFKA_SECURITY_PROTOCOL: "PLAINTEXT"  # Ajusta este valor según la configuración del broker Kafka
+
