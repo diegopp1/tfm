@@ -32,7 +32,7 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_DELETE_TOPIC_ENABLE: "true"
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-
+      KAFKA_SECURITY_PROTOCOL: "PLAINTEXT"  # Agrega esta línea
   # Kafka Manager GUI to configure Kafka
   kafka_manager:
     image: deltaprojects/kafka-manager:v3.0.0.6-2
@@ -58,6 +58,6 @@ services:
       SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: "zookeeper:2181"
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
-      SCHEMA_REGISTRY_KAFKA_BOOTSTRAP_SERVERS: "broker:29092"  # Agrega esta línea con la dirección del broker Kafka y su puerto
+      SCHEMA_REGISTRY_KAFKA_BOOTSTRAP_SERVERS: "LISTENER_1://broker:29092"  # Agrega esta línea con la dirección del broker Kafka y su puerto
       SCHEMA_REGISTRY_KAFKA_SECURITY_PROTOCOL: "PLAINTEXT"  # Ajusta este valor según la configuración del broker Kafka
       SCHEMA_REGISTRY_KAFKA_SASL_MECHANISM: ""
