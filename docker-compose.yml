@@ -47,6 +47,12 @@ services:
       JMX_PORT: 49999
 
   # Schema Registry service
+# Schema Registry service
   schema-registry:
     image: confluentinc/cp-schema-registry:7.1.0
-    hostname: schema-registry
+    depends_on:
+      - kafka
+    ports:
+      - "8085:8081"
+    environment:
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: "zookeeper:2181"
