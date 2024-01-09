@@ -60,4 +60,4 @@ services:
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
       SCHEMA_REGISTRY_KAFKA_BOOTSTRAP_SERVERS: "broker:29092"  # Agrega esta línea con la dirección del broker Kafka y su puerto
       SCHEMA_REGISTRY_KAFKA_SECURITY_PROTOCOL: "PLAINTEXT"  # Ajusta este valor según la configuración del broker Kafka
-
+      SCHEMA_REGISTRY_KAFKA_SASL_MECHANISM: ""
