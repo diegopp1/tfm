@@ -46,13 +46,14 @@ services:
       KAFKA_MANAGER_PASSWORD: bigdata # Pss for the GUI
       JMX_PORT: 49999
 
-  # Schema Registry service
+
 # Schema Registry service
   schema-registry:
     image: confluentinc/cp-schema-registry:7.1.0
     depends_on:
-      - kafka
+      - broker
     ports:
       - "8085:8081"
     environment:
       SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: "zookeeper:2181"
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
