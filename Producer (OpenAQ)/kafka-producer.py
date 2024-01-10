@@ -14,21 +14,27 @@ producer = Producer(conf)
 # API Key de OpenAQ (reemplaza 'your-openaq-api-key' con tu clave real)
 openaq_api_key = '83fcfc1c531d71a7290846eb31fd75b91a3f1cd85653f2fef21f5140e2371746'
 
-# URL base de la API de OpenAQ
-openaq_base_url = "https://api.openaq.org/v2/locations/"
-
 # Nombre del tema de Kafka (reemplaza 'my_topic' con el nombre real del tema)
 kafka_topic = 'my_topic'
 
+# URL base de la API de OpenAQ para obtener datos de calidad del aire por país
+openaq_data_url = "https://api.openaq.org/v2/measurements"
 
-def fetch_openaq_data(location_id):
-    # Realizar la solicitud a la API de OpenAQ con la clave API y el ID de la ubicación específica
-    response = requests.get(f"{openaq_base_url}{location_id}", headers={"X-API-Key": openaq_api_key})
+
+def fetch_air_quality_data(country_code):
+    # Realizar la solicitud a la API de OpenAQ con la clave API y el código de país específico
+    params = {
+        'country': country_code,
+        'limit': 1,  # Puedes ajustar el límite según tus necesidades
+        'sort': 'desc',  # Puedes ajustar el orden según tus necesidades
+    }
+    response = requests.get(openaq_data_url, headers={"X-API-Key": openaq_api_key}, params=params)
 
     if response.status_code == 200:
-        return response.json()
+        return response.json()['results']
     else:
-        raise Exception(f"Error al obtener datos de OpenAQ. Código de estado: {response.status_code}")
+        raise Exception(
+            f"Error al obtener datos de calidad del aire de OpenAQ. Código de estado: {response.status_code}")
 
 
 def delivery_report(err, msg):
@@ -40,19 +46,26 @@ def delivery_report(err, msg):
 
 while True:
     try:
-        # Obtener datos de OpenAQ para la ubicación específica
-        # En este ejemplo, la ubicación se deja como un parámetro configurable (puede ser seleccionado desde el front end)
-        location_id = input("Introduce el ID de la ubicación de OpenAQ (por ejemplo, 2178): ")
-        openaq_data = fetch_openaq_data(location_id)
+        # Obtener la lista de países de OpenAQ
+        countries = fetch_countries()
 
-        # Enviar datos al tema de Kafka
-        producer.produce(kafka_topic, key=None, value=json.dumps(openaq_data).encode('utf-8'), callback=delivery_report)
+        # Iterar sobre la lista de países
+        for country in countries:
+            country_code = country['code']
 
-        # Esperar un breve período de tiempo antes de obtener nuevos datos
-        time.sleep(60)  # Espera 60 segundos (puedes ajustar este valor)
+            # Obtener datos de calidad del aire para el país específico
+            air_quality_data = fetch_air_quality_data(country_code)
+
+            # Enviar datos al tema de Kafka
+            producer.produce(kafka_topic, key=None, value=json.dumps(air_quality_data).encode('utf-8'),
+                             callback=delivery_report)
+
+            # Esperar un breve período de tiempo antes de obtener nuevos datos
+            time.sleep(1)  # Espera 1 segundo entre cada país (puedes ajustar este valor)
 
     except Exception as e:
         print(f"Error al obtener/enviar datos: {e}")
 
 # Esperar a que todos los mensajes se entreguen antes de cerrar el productor
 producer.flush()
+
