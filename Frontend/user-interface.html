@@ -4,23 +4,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenAQ Data Producer</title>
+    <title>IoT Data Dashboard - OpenAQ</title>
+
+    <!-- Enlaces a bibliotecas externas para gráficos y estilos modernos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
-    <h1>Interfaz de usuario</h1>
-    <label for="locationId">ID de Ubicación:</label>
-    <input type="text" id="locationId" name="locationId">
-    <button onclick="sendLocation()">Enviar Ubicación</button>
+
+    <section class="hero is-primary">
+        <div class="hero-body">
+            <div class="container">
+                <h1 class="title">
+                    IoT Data Dashboard
+                </h1>
+                <h2 class="subtitle">
+                    Test Page - OpenAQ Data
+                </h2>
+            </div>
+        </div>
+    </section>
+
+    <div class="section">
+        <div class="container">
+            <div class="columns">
+                <!-- Columna izquierda con el formulario para enviar la ubicación -->
+                <div class="column is-one-third">
+                    <h3 class="title is-3">Send Location</h3>
+                    <label for="locationId">Location ID:</label>
+                    <input class="input" type="text" id="locationId" name="locationId">
+                    <button class="button is-primary" onclick="sendLocation()">Send Location</button>
+                </div>
+
+                <!-- Columna derecha con el índice y el espacio para mostrar datos históricos y gráficos -->
+                <div class="column">
+                    <h3 class="title is-3">Dashboard</h3>
+                    <ul>
+                        <li><a href="#historical-data">Historical Data</a></li>
+                        <li><a href="#generate-charts">Generate Charts</a></li>
+                    </ul>
+
+                    <!-- Historial de datos -->
+                    <section id="historical-data" class="mt-5">
+                        <h4 class="title is-4">Historical Data</h4>
+                        <!-- Aquí puedes mostrar los datos históricos en formato de tabla -->
+                        <!-- Por ejemplo, puedes utilizar una tabla de Bootstrap: https://getbootstrap.com/docs/5.3/content/tables/ -->
+                        <!-- Inserta el código de la tabla aquí -->
+                    </section>
+
+                    <!-- Generar gráficos -->
+                    <section id="generate-charts" class="mt-5">
+                        <h4 class="title is-4">Generate Charts</h4>
+                        <!-- Aquí puedes insertar código para generar gráficos utilizando Plotly o cualquier otra biblioteca -->
+                        <!-- Por ejemplo, puedes utilizar la biblioteca Plotly para crear gráficos interactivos -->
+                        <!-- Inserta el código de los gráficos aquí -->
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         function sendLocation() {
             const locationId = document.getElementById('locationId').value;
-            // Aquí puedes realizar una solicitud a tu backend para enviar la ubicación al servidor Flask
+            // Realiza una solicitud al backend para enviar la ubicación al servidor Flask
             fetch(`/send-location/${locationId}`, { method: 'POST' })
                 .then(response => response.json())
                 .then(data => console.log(data))
                 .catch(error => console.error('Error:', error));
         }
     </script>
+
 </body>
 </html>
