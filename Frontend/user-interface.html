@@ -6,8 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IoT Data Dashboard - OpenAQ</title>
 
-    <!-- Enlaces a bibliotecas externas para gráficos y estilos modernos -->
+    <!-- Enlaces a bibliotecas externas para gráficos, estilos y mapas interactivos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
@@ -28,33 +29,46 @@
     <div class="section">
         <div class="container">
             <div class="columns">
-                <!-- Columna izquierda con el formulario para enviar la ubicación -->
-                <div class="column is-one-third">
-                    <h3 class="title is-3">Send Location</h3>
-                    <label for="locationId">Location ID:</label>
-                    <input class="input" type="text" id="locationId" name="locationId">
-                    <button class="button is-primary" onclick="sendLocation()">Send Location</button>
+                <!-- Columna izquierda con el índice -->
+                <div class="column is-one-fifth">
+                    <aside class="menu">
+                        <p class="menu-label">Index</p>
+                        <ul class="menu-list">
+                            <li><a href="#send-location">Send Location</a></li>
+                            <li><a href="#historical-data">Historical Data</a></li>
+                            <li><a href="#generate-charts">Generate Charts</a></li>
+                        </ul>
+                    </aside>
                 </div>
 
-                <!-- Columna derecha con el índice y el espacio para mostrar datos históricos y gráficos -->
+                <!-- Columna derecha con el área principal para mostrar mapas y datos -->
                 <div class="column">
-                    <h3 class="title is-3">Dashboard</h3>
-                    <ul>
-                        <li><a href="#historical-data">Historical Data</a></li>
-                        <li><a href="#generate-charts">Generate Charts</a></li>
-                    </ul>
+                    <!-- Sección para enviar la ubicación -->
+                    <section id="send-location" class="mt-3">
+                        <h3 class="title is-3">Send Location</h3>
+                        <label for="locationId">Location ID:</label>
+                        <input class="input" type="text" id="locationId" name="locationId">
+                        <button class="button is-primary" onclick="sendLocation()">Send Location</button>
+                    </section>
 
-                    <!-- Historial de datos -->
+                    <!-- Sección para mostrar el mapa interactivo -->
+                    <section id="map-section" class="mt-5">
+                        <h3 class="title is-3">Interactive Map</h3>
+                        <div id="map" style="height: 400px;"></div>
+                        <!-- Puedes ajustar la altura del mapa según tus necesidades -->
+                    </section>
+
+                    <!-- Sección para mostrar datos históricos -->
                     <section id="historical-data" class="mt-5">
-                        <h4 class="title is-4">Historical Data</h4>
+                        <h3 class="title is-3">Historical Data</h3>
                         <!-- Aquí puedes mostrar los datos históricos en formato de tabla -->
                         <!-- Por ejemplo, puedes utilizar una tabla de Bootstrap: https://getbootstrap.com/docs/5.3/content/tables/ -->
                         <!-- Inserta el código de la tabla aquí -->
                     </section>
 
-                    <!-- Generar gráficos -->
+                    <!-- Sección para generar gráficos -->
                     <section id="generate-charts" class="mt-5">
-                        <h4 class="title is-4">Generate Charts</h4>
+                        <h3 class="title is-3">Generate Charts</h3>
                         <!-- Aquí puedes insertar código para generar gráficos utilizando Plotly o cualquier otra biblioteca -->
                         <!-- Por ejemplo, puedes utilizar la biblioteca Plotly para crear gráficos interactivos -->
                         <!-- Inserta el código de los gráficos aquí -->
@@ -65,15 +79,10 @@
     </div>
 
     <script>
-        function sendLocation() {
-            const locationId = document.getElementById('locationId').value;
-            // Realiza una solicitud al backend para enviar la ubicación al servidor Flask
-            fetch(`/send-location/${locationId}`, { method: 'POST' })
-                .then(response => response.json())
-                .then(data => console.log(data))
-                .catch(error => console.error('Error:', error));
-        }
-    </script>
-
-</body>
-</html>
+        // Ejemplo básico de datos para los continentes
+        const continentsData = [
+            { id: 'europe', name: 'Europe', lat: 51.509865, lon: -0.118092 },
+            { id: 'asia', name: 'Asia', lat: 35.6895, lon: 139.6917 },
+            { id: 'africa', name: 'Africa', lat: -1.286389, lon: 36.817223 },
+            { id: 'oceania', name: 'Oceania', lat: -33.8688, lon: 151.2093 },
+            { id: 'north-america', name: 'North America', lat: 40.7128, lon: -74.
