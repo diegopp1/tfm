@@ -1,0 +1,26 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenAQ Data Producer</title>
+</head>
+<body>
+    <h1>Selecciona una ubicación</h1>
+    <label for="locationId">ID de Ubicación:</label>
+    <input type="text" id="locationId" name="locationId">
+    <button onclick="sendLocation()">Enviar Ubicación</button>
+
+    <script>
+        function sendLocation() {
+            const locationId = document.getElementById('locationId').value;
+            // Aquí puedes realizar una solicitud a tu backend para enviar la ubicación al servidor Flask
+            fetch(`/send-location/${locationId}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => console.log(data))
+                .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>
