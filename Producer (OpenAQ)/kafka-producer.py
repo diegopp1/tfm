@@ -44,6 +44,19 @@ def delivery_report(err, msg):
         print('Mensaje entregado a {} [{}]'.format(msg.topic(), msg.partition()))
 
 
+def fetch_countries():
+    # Realizar la solicitud a la API de OpenAQ para obtener la lista de países
+    response = requests.get(
+        "https://api.openaq.org/v2/countries?limit=100&page=1&offset=0&sort=asc&order_by=name",
+        headers={"X-API-Key": openaq_api_key}
+    )
+
+    if response.status_code == 200:
+        return response.json()['results']
+    else:
+        raise Exception(f"Error al obtener la lista de países de OpenAQ. Código de estado: {response.status_code}")
+
+
 while True:
     try:
         # Obtener la lista de países de OpenAQ
@@ -57,15 +70,18 @@ while True:
             air_quality_data = fetch_air_quality_data(country_code)
 
             # Enviar datos al tema de Kafka
-            producer.produce(kafka_topic, key=None, value=json.dumps(air_quality_data).encode('utf-8'),
-                             callback=delivery_report)
+            producer.produce(
+                kafka_topic,
+                key=None,
+                value=json.dumps(air_quality_data).encode('utf-8'),
+                callback=delivery_report
+            )
 
-            # Esperar un breve período de tiempo antes de obtener nuevos datos
-            time.sleep(1)  # Espera 1 segundo entre cada país (puedes ajustar este valor)
+            # Esperar un minuto antes de obtener nuevos datos
+            time.sleep(60)  # Espera 60 segundos (1 minuto) entre cada país
 
     except Exception as e:
         print(f"Error al obtener/enviar datos: {e}")
 
 # Esperar a que todos los mensajes se entreguen antes de cerrar el productor
 producer.flush()
-
