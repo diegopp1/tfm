@@ -12,7 +12,7 @@ conf = {
 producer = Producer(conf)
 
 # API Key de OpenAQ (reemplaza 'your-openaq-api-key' con tu clave real)
-openaq_api_key = 'your-openaq-api-key'
+openaq_api_key = '83fcfc1c531d71a7290846eb31fd75b91a3f1cd85653f2fef21f5140e2371746'
 
 # URL base de la API de OpenAQ
 openaq_base_url = "https://api.openaq.org/v2/locations/"
@@ -20,16 +20,23 @@ openaq_base_url = "https://api.openaq.org/v2/locations/"
 # Nombre del tema de Kafka (reemplaza 'my_topic' con el nombre real del tema)
 kafka_topic = 'my_topic'
 
+
 def fetch_openaq_data(location_id):
     # Realizar la solicitud a la API de OpenAQ con la clave API y el ID de la ubicación específica
     response = requests.get(f"{openaq_base_url}{location_id}", headers={"X-API-Key": openaq_api_key})
-    return response.json()
+
+    if response.status_code == 200:
+        return response.json()
+    else:
+        raise Exception(f"Error al obtener datos de OpenAQ. Código de estado: {response.status_code}")
+
 
 def delivery_report(err, msg):
     if err is not None:
         print('Error al entregar el mensaje: {}'.format(err))
     else:
         print('Mensaje entregado a {} [{}]'.format(msg.topic(), msg.partition()))
+
 
 while True:
     try:
@@ -49,4 +56,3 @@ while True:
 
 # Esperar a que todos los mensajes se entreguen antes de cerrar el productor
 producer.flush()
-
