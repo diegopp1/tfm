@@ -20,7 +20,6 @@ consumer = Consumer(kafka_conf)
 # Suscribirse a un tema
 consumer.subscribe([kafka_topic])
 
-
 # Ruta principal que renderiza la página web
 @app.route('/')
 def index():
@@ -54,6 +53,7 @@ def emit_data():
                 try:
                     data = json.loads(msg.value().decode('utf-8'))
                     socketio.emit('air_quality_data', data)
+                    print(f"Mensaje recibido de {kafka_topic}: {data}")
                 except Exception as e:
                     print(f"Error al procesar mensaje: {e}")
 
@@ -67,4 +67,3 @@ def emit_data():
 
 if __name__ == '__main__':
     socketio.run(app, debug=False, allow_unsafe_werkzeug=True)
-
