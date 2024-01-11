@@ -15,7 +15,7 @@ producer = Producer(conf)
 openaq_api_key = '83fcfc1c531d71a7290846eb31fd75b91a3f1cd85653f2fef21f5140e2371746'
 
 # Nombre del tema de Kafka (reemplaza 'my_topic' con el nombre real del tema)
-kafka_topic = 'my_topic'
+kafka_topic = 'json-topic'
 
 # URL base de la API de OpenAQ para obtener datos de calidad del aire por país
 openaq_data_url = "https://api.openaq.org/v2/measurements"
