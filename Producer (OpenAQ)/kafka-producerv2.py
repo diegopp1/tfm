@@ -39,6 +39,8 @@ def delivery_report(err, msg):
         print('Error al entregar el mensaje: {}'.format(err))
     else:
         print('Mensaje entregado a {} [{}]'.format(msg.topic(), msg.partition()))
+        # Imprimir el contenido del mensaje (clave y valor)
+        print('Contenido del mensaje: Key: {}, Value: {}'.format(msg.key(), msg.value()))
 
 # Bucle principal para enviar datos de OpenAQ al tema de Kafka
 while True:
@@ -55,7 +57,7 @@ while True:
         )
 
         # Esperar un segundo antes de obtener nuevos datos
-        time.sleep(1)  # Espera 1 segundo entre cada envío
+        time.sleep(10)  # Espera 1 segundo entre cada envío
 
     except Exception as e:
         print(f"Error al obtener/enviar datos: {e}")
