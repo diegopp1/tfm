@@ -1,11 +1,25 @@
-# Script for the backend of the application.
 from flask import Flask, render_template, jsonify
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO
 import json
-import subprocess
+from confluent_kafka import Consumer, KafkaError
 
 app = Flask(__name__)
 socketio = SocketIO(app)
+
+# Configuración del consumidor de Kafka
+kafka_conf = {
+    'bootstrap.servers': 'localhost:9092',  # Cambia esto según la configuración de tu clúster Kafka
+    'group.id': 'my_consumer_group',
+    'auto.offset.reset': 'earliest'
+}
+kafka_topic = 'topic-1'  # Cambia esto según el nombre del tema que creaste en el clúster Kafka
+
+# Crear un consumidor
+consumer = Consumer(kafka_conf)
+
+# Suscribirse a un tema
+consumer.subscribe([kafka_topic])
+
 
 # Ruta principal que renderiza la página web
 @app.route('/')
@@ -22,27 +36,35 @@ def start_stream():
 
 # Función para emitir datos a través de Socket.IO
 def emit_data():
-    # Aquí puedes poner la lógica para obtener datos del consumidor de Kafka externo
-    # y emitirlos a través de Socket.IO
     while True:
         try:
-            # Obtener datos del consumidor externo (ajusta según tu lógica)
-            data = fetch_data_from_kafka_consumer()
-            socketio.emit('air_quality_data', data)
-            socketio.sleep(1)  # Esperar un segundo (ajusta según tu necesidad)
-        except Exception as e:
-            print(f"Error al obtener/enviar datos: {e}")
+            # Esperar mensajes
+            msg = consumer.poll(1.0)
 
-# Esta función simula la obtención de datos del consumidor de Kafka externo
-def fetch_data_from_kafka_consumer():
-    # Aquí puedes poner la lógica para obtener datos del consumidor de Kafka externo
-    # Reemplaza esto con tu propia lógica
-    simulated_data = {
-        'location': 'Example Location',
-        'value': 42,
-        'unit': 'ug/m³',
-    }
-    return simulated_data
+            if msg is not None:
+                if msg.error():
+                    if msg.error().code() == KafkaError._PARTITION_EOF:
+                        # No se encontraron nuevos mensajes
+                        continue
+                    else:
+                        print(msg.error())
+                        break
+
+                # Decodificar y procesar el mensaje JSON
+                try:
+                    data = json.loads(msg.value().decode('utf-8'))
+                    socketio.emit('air_quality_data', data)
+                except Exception as e:
+                    print(f"Error al procesar mensaje: {e}")
+
+            socketio.sleep(1)  # Esperar un segundo (ajusta según tu necesidad)
+
+        except KeyboardInterrupt:
+            break
+
+    # Cerrar el consumidor al salir del bucle principal
+    consumer.close()
 
 if __name__ == '__main__':
     socketio.run(app, debug=False, allow_unsafe_werkzeug=True)
+
