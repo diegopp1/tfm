@@ -9,8 +9,6 @@
 
     <!-- Enlaces a bibliotecas externas para gráficos, estilos y mapas interactivos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 </head>
 
@@ -31,72 +29,14 @@
 
     <div class="section">
         <div class="container">
-            <div class="columns">
-                <!-- Columna izquierda con el índice -->
-                <div class="column is-one-fifth">
-                    <aside class="menu">
-                        <p class="menu-label">Index</p>
-                        <ul class="menu-list">
-                            <li><a href="#send-location">Send Location</a></li>
-                            <li><a href="#historical-data">Historical Data</a></li>
-                            <li><a href="#generate-charts">Generate Charts</a></li>
-                        </ul>
-                    </aside>
-                </div>
+            <!-- Sección para mostrar el dato en bruto -->
+            <section id="raw-data-section" class="mt-5">
+                <h3 class="title is-3">Raw Data</h3>
+                <div id="rawData" class="content"></div>
+            </section>
 
-                <!-- Columna derecha con el área principal para mostrar mapas y datos -->
-                <div class="column">
-                    <!-- Sección para enviar la ubicación -->
-                    <section id="send-location" class="mt-3">
-                        <h3 class="title is-3">Send Location</h3>
-                        <div class="field">
-                            <label class="label">Select Country:</label>
-                            <div class="control">
-                                <div class="select">
-                                    <select id="countrySelect">
-                                        <option value="World">World</option>
-                                        <!-- Agrega más opciones según tus necesidades -->
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <button class="button is-primary" onclick="startDataStreaming()">Start Data Streaming</button>
-                    </section>
-
-                    <!-- Sección para mostrar el mapa interactivo -->
-                    <section id="map-section" class="mt-5">
-                        <h3 class="title is-3">Interactive Map</h3>
-                        <div id="map" style="height: 400px;"></div>
-                        <!-- Puedes ajustar la altura del mapa según tus necesidades -->
-                    </section>
-
-                    <!-- Sección para mostrar datos históricos -->
-                    <section id="historical-data" class="mt-5">
-                        <h3 class="title is-3">Historical Data</h3>
-                        <!-- Tabla para mostrar datos históricos -->
-                        <table id="historicalDataTable" class="table">
-                            <thead>
-                                <tr>
-                                    <th>Location</th>
-                                    <th>Value</th>
-                                    <th>Unit</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Las filas se agregarán dinámicamente mediante JavaScript -->
-                            </tbody>
-                        </table>
-                    </section>
-
-                    <!-- Sección para generar gráficos -->
-                    <section id="generate-charts" class="mt-5">
-                        <h3 class="title is-3">Generate Charts</h3>
-                        <!-- Aquí puedes insertar código para generar gráficos utilizando Plotly o cualquier otra biblioteca -->
-                        <!-- Por ejemplo, puedes utilizar la biblioteca Plotly para crear gráficos interactivos -->
-                        <!-- Inserta el código de los gráficos aquí -->
-                    </section>
-                </div>
-            </div>
+            <!-- Botón para iniciar la transmisión de datos -->
+            <button class="button is-primary mt-3" onclick="startDataStreaming()">Start Data Streaming</button>
         </div>
     </div>
 
@@ -105,27 +45,17 @@
             const socket = io.connect('http://' + document.domain + ':' + location.port);
 
             socket.on('air_quality_data', function (data) {
-                // Aquí puedes procesar los datos y actualizar dinámicamente la página
-                console.log('Datos recibidos:', data);
-                // Ejemplo: Agregar los datos a una tabla en el área de datos históricos
-                updateHistoricalData(data);
+                // Actualizar el área de dato en bruto
+                updateRawData(data);
             });
 
-            function updateHistoricalData(data) {
-                // Implementa la lógica para agregar datos a la tabla de datos históricos
-                // Por ejemplo, puedes crear filas y celdas de una tabla con los datos recibidos
-                // y agregarlas al área de datos históricos en la página web.
-                const table = document.getElementById('historicalDataTable');
-                const row = table.insertRow(-1);
-                const cell1 = row.insertCell(0);
-                const cell2 = row.insertCell(1);
-                const cell3 = row.insertCell(2);
-                cell1.innerHTML = data.location;
-                cell2.innerHTML = data.value;
-                cell3.innerHTML = data.unit;
+            function updateRawData(data) {
+                // Mostrar el dato en bruto en el área de dato en bruto
+                const rawDataDiv = document.getElementById('rawData');
+                rawDataDiv.innerHTML = JSON.stringify(data, null, 2);
             }
 
-            // Función de ejemplo para iniciar la transmisión de datos al hacer clic en un botón
+            // Función para iniciar la transmisión de datos al hacer clic en un botón
             function startDataStreaming() {
                 fetch('/start-stream'); // Iniciar transmisión al hacer clic en el botón
             }
@@ -135,3 +65,4 @@
 </body>
 
 </html>
+
