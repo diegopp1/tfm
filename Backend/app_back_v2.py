@@ -12,7 +12,7 @@ kafka_conf = {
     'group.id': 'my_consumer_group',
     'auto.offset.reset': 'earliest'
 }
-kafka_topic = 'topic-1'  # Cambia esto según el nombre del tema que creaste en el clúster Kafka
+kafka_topic = 'topic-2'  # Cambia esto según el nombre del tema que creaste en el clúster Kafka
 
 # Crear un consumidor
 consumer = Consumer(kafka_conf)
