@@ -51,4 +51,4 @@ def kafka_consumer():
 
 if __name__ == '__main__':
     socketio.start_background_task(target=kafka_consumer)
-    socketio.run(app, debug=False)
+    socketio.run(app, debug=False, allow_unsafe_werkzeug=True)
