@@ -1,6 +1,10 @@
 from confluent_kafka import Consumer, KafkaError
 import json
+import logging
 
+# Configuración de logs
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('consumer')
 
 # Configuración del consumidor de Kafka
 conf = {
@@ -28,16 +32,15 @@ try:
                 # No se encontraron nuevos mensajes
                 continue
             else:
-                print(msg.error())
+                logger.error(msg.error())
                 break
 
         # Decodificar y procesar el mensaje JSON
         try:
             data = json.loads(msg.value().decode('utf-8'))
-
-
+            logger.info("Datos recibidos: {}".format(data))
         except Exception as e:
-            print(f"Error al procesar mensaje: {e}")
+            logger.error(f"Error al procesar mensaje: {e}")
 
 except KeyboardInterrupt:
     pass  # Manejar la interrupción del teclado (Ctrl+C)
@@ -45,3 +48,4 @@ except KeyboardInterrupt:
 finally:
     # Cerrar el consumidor
     consumer.close()
+
