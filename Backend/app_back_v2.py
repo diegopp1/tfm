@@ -10,7 +10,7 @@ socketio = SocketIO(app)
 # Ruta principal que renderiza la página web
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index2.html')
 
 # Ruta para iniciar la transmisión de datos al hacer clic en el botón
 @app.route('/start-stream')
