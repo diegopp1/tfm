@@ -4,7 +4,7 @@ import json
 from confluent_kafka import Consumer, KafkaError
 
 app = Flask(__name__)
-socketio = SocketIO(app)
+socketio = SocketIO(app, threaded=True)  # Configuración para permitir múltiples conexiones simultáneas
 
 # Configuración del consumidor de Kafka
 kafka_conf = {
@@ -35,35 +35,32 @@ def start_stream():
 
 # Función para emitir datos a través de Socket.IO
 def emit_data():
-    while True:
-        try:
-            # Esperar mensajes
-            msg = consumer.poll(1.0)
+    try:
+        for msg in consumer:
+            if msg.error():
+                if msg.error().code() == KafkaError._PARTITION_EOF:
+                    # No se encontraron nuevos mensajes
+                    continue
+                else:
+                    print(msg.error())
+                    break
 
-            if msg is not None:
-                if msg.error():
-                    if msg.error().code() == KafkaError._PARTITION_EOF:
-                        # No se encontraron nuevos mensajes
-                        continue
-                    else:
-                        print(msg.error())
-                        break
-
-                # Decodificar y procesar el mensaje JSON
-                try:
-                    data = json.loads(msg.value().decode('utf-8'))
-                    socketio.emit('air_quality_data', data)
-                    print(f"Mensaje recibido de {kafka_topic}: {data}")
-                except Exception as e:
-                    print(f"Error al procesar mensaje: {e}")
+            # Decodificar y procesar el mensaje JSON
+            try:
+                data = json.loads(msg.value().decode('utf-8'))
+                socketio.emit('air_quality_data', data)
+                print(f"Mensaje recibido de {kafka_topic}: {data}")
+            except Exception as e:
+                print(f"Error al procesar mensaje: {e}")
 
             socketio.sleep(1)  # Esperar un segundo (ajusta según tu necesidad)
 
-        except KeyboardInterrupt:
-            break
+    except KeyboardInterrupt:
+        pass
 
-    # Cerrar el consumidor al salir del bucle principal
-    consumer.close()
+    finally:
+        # Cerrar el consumidor al salir del bucle principal
+        consumer.close()
 
 if __name__ == '__main__':
-    socketio.run(app, debug=False, allow_unsafe_werkzeug=True)
+    socketio.run(app, debug=True, allow_unsafe_werkzeug=True, use_reloader=False)
