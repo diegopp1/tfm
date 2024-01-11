@@ -18,15 +18,12 @@ kafka_topic = 'json-topic'
 openaq_api_key = '83fcfc1c531d71a7290846eb31fd75b91a3f1cd85653f2fef21f5140e2371746'
 
 # URL base de la API de OpenAQ para obtener datos de calidad del aire por país
-openaq_data_url = "https://api.openaq.org/v2/measurements"
+openaq_data_url = "https://api.openaq.org/v2/measurements?date_from=2024-01-03T00%3A00%3A00Z&date_to=2024-01-10T15%3A53%3A00Z&limit=100&page=1&offset=0&sort=desc&radius=1000&order_by=datetime"
 
 def fetch_air_quality_data():
     # Realizar la solicitud a la API de OpenAQ con la clave API
-    params = {
-        'limit': 1,  # Puedes ajustar el límite según tus necesidades
-        'sort': 'desc',  # Puedes ajustar el orden según tus necesidades
-    }
-    response = requests.get(openaq_data_url, headers={"X-API-Key": openaq_api_key}, params=params)
+
+    response = requests.get(openaq_data_url, headers={"X-API-Key": openaq_api_key})
 
     if response.status_code == 200:
         return response.json()['results']
