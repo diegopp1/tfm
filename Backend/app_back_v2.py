@@ -2,7 +2,7 @@
 from flask import Flask, render_template, jsonify
 from flask_socketio import SocketIO, emit
 import json
-import requests
+import subprocess
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -22,17 +22,27 @@ def start_stream():
 
 # Función para emitir datos a través de Socket.IO
 def emit_data():
+    # Aquí puedes poner la lógica para obtener datos del consumidor de Kafka externo
+    # y emitirlos a través de Socket.IO
     while True:
-        # Lógica para obtener datos (puedes adaptarla según tus necesidades)
-        data = fetch_data()
-        socketio.emit('air_quality_data', json.dumps(data))
-        socketio.sleep(1)  # Esperar un segundo (ajusta según tu necesidad)
+        try:
+            # Obtener datos del consumidor externo (ajusta según tu lógica)
+            data = fetch_data_from_kafka_consumer()
+            socketio.emit('air_quality_data', data)
+            socketio.sleep(1)  # Esperar un segundo (ajusta según tu necesidad)
+        except Exception as e:
+            print(f"Error al obtener/enviar datos: {e}")
 
-# Función de ejemplo para obtener datos (puedes adaptarla según tu caso)
-def fetch_data():
-    # Lógica para obtener datos, por ejemplo, de OpenAQ o cualquier otra fuente
-    # Retorna un diccionario simulado, reemplaza esto con tu lógica real
-    return {'location': 'Example Location', 'value': 42, 'unit': 'ug/m³'}
+# Esta función simula la obtención de datos del consumidor de Kafka externo
+def fetch_data_from_kafka_consumer():
+    # Aquí puedes poner la lógica para obtener datos del consumidor de Kafka externo
+    # Reemplaza esto con tu propia lógica
+    simulated_data = {
+        'location': 'Example Location',
+        'value': 42,
+        'unit': 'ug/m³',
+    }
+    return simulated_data
 
 if __name__ == '__main__':
     socketio.run(app, debug=False, allow_unsafe_werkzeug=True)
