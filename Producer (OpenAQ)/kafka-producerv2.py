@@ -1,5 +1,6 @@
 import json
 import time
+import requests
 from confluent_kafka import Producer
 
 # Configuración del productor de Kafka
@@ -10,20 +11,28 @@ conf = {
 # Crear un productor
 producer = Producer(conf)
 
-# Nombre del tema de Kafka (reemplaza 'my_topic' con el nombre real del tema)
+# Nombre del tema de Kafka (reemplaza 'json-topic' con el nombre real del tema)
 kafka_topic = 'json-topic'
 
+# API Key de OpenAQ (reemplaza 'your-openaq-api-key' con tu clave real)
+openaq_api_key = '83fcfc1c531d71a7290846eb31fd75b91a3f1cd85653f2fef21f5140e2371746'
 
-def fetch_data():
-    # Esta función debería contener tu lógica para obtener datos simulados o reales
-    # Reemplaza esto con tu propia lógica
-    simulated_data = {
-        'location': 'Simulated Location',
-        'value': 42.0,
-        'unit': 'Simulated Unit',
+# URL base de la API de OpenAQ para obtener datos de calidad del aire por país
+openaq_data_url = "https://api.openaq.org/v2/measurements"
+
+def fetch_air_quality_data():
+    # Realizar la solicitud a la API de OpenAQ con la clave API
+    params = {
+        'limit': 1,  # Puedes ajustar el límite según tus necesidades
+        'sort': 'desc',  # Puedes ajustar el orden según tus necesidades
     }
-    return simulated_data
+    response = requests.get(openaq_data_url, headers={"X-API-Key": openaq_api_key}, params=params)
 
+    if response.status_code == 200:
+        return response.json()['results']
+    else:
+        raise Exception(
+            f"Error al obtener datos de calidad del aire de OpenAQ. Código de estado: {response.status_code}")
 
 def delivery_report(err, msg):
     if err is not None:
@@ -31,12 +40,11 @@ def delivery_report(err, msg):
     else:
         print('Mensaje entregado a {} [{}]'.format(msg.topic(), msg.partition()))
 
-
-# Bucle principal para enviar datos simulados (ajusta según tu caso)
+# Bucle principal para enviar datos de OpenAQ al tema de Kafka
 while True:
     try:
-        # Obtener datos simulados (reemplaza esto con tu lógica real)
-        air_quality_data = fetch_data()
+        # Obtener datos de calidad del aire de OpenAQ
+        air_quality_data = fetch_air_quality_data()
 
         # Enviar datos al tema de Kafka
         producer.produce(
