@@ -16,7 +16,7 @@ def index():
 @app.route('/send-location/<location_id>', methods=['POST'])
 def send_location(location_id):
     # Ejecutar el script del productor de Kafka con la ubicación proporcionada
-    subprocess.run(['python', 'kafka_producer.py', location_id])
+    subprocess.run(['python', 'kafka-producer.py', location_id])
     # Responder con un JSON indicando que la operación fue exitosa.
     return jsonify({'status': 'success'})
 
