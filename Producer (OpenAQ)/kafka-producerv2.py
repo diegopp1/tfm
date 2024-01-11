@@ -56,7 +56,7 @@ while True:
             callback=delivery_report
         )
 
-        # Esperar un segundo antes de obtener nuevos datos
+        # Esperar diez segundos antes de obtener nuevos datos
         time.sleep(10)  # Espera 1 segundo entre cada envío
 
     except Exception as e:
