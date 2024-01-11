@@ -8,7 +8,7 @@ conf = {
     'group.id': 'my_consumer_group',
     'auto.offset.reset': 'earliest'
 }
-topic = 'json-topic'  # Cambia esto según el nombre del tema que creaste en el clúster Kafka
+topic = 'topic-1'  # Cambia esto según el nombre del tema que creaste en el clúster Kafka
 
 # Crear un consumidor
 consumer = Consumer(conf)
