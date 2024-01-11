@@ -35,4 +35,4 @@ def fetch_data():
     return {'location': 'Example Location', 'value': 42, 'unit': 'ug/m³'}
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app, debug=False, allow_unsafe_werkzeug=True)
