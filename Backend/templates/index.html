@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 </head>
 <body>
 
@@ -72,17 +73,28 @@
                     <!-- Sección para mostrar datos históricos -->
                     <section id="historical-data" class="mt-5">
                         <h3 class="title is-3">Historical Data</h3>
-                        <!-- Aquí puedes mostrar los datos históricos en formato de tabla -->
-                        <!-- Por ejemplo, puedes utilizar una tabla de Bootstrap: https://getbootstrap.com/docs/5.3/content/tables/ -->
-                        <!-- Inserta el código de la tabla aquí -->
+                        <!-- Tabla para mostrar datos históricos -->
+                        <table class="table is-fullwidth">
+                            <thead>
+                                <tr>
+                                    <th>Location</th>
+                                    <th>Parameter</th>
+                                    <th>Value</th>
+                                    <!-- Agrega más encabezados según tus necesidades -->
+                                </tr>
+                            </thead>
+                            <tbody id="historicalDataTableBody">
+                                <!-- Aquí se agregarán dinámicamente las filas de la tabla -->
+                            </tbody>
+                        </table>
                     </section>
 
                     <!-- Sección para generar gráficos -->
                     <section id="generate-charts" class="mt-5">
                         <h3 class="title is-3">Generate Charts</h3>
-                        <!-- Aquí puedes insertar código para generar gráficos utilizando Plotly o cualquier otra biblioteca -->
-                        <!-- Por ejemplo, puedes utilizar la biblioteca Plotly para crear gráficos interactivos -->
-                        <!-- Inserta el código de los gráficos aquí -->
+                        <!-- Aquí puedes insertar código para generar gráficos utilizando Plotly u otra biblioteca -->
+                        <!-- Por ejemplo, puedes agregar un contenedor donde se renderizarán los gráficos -->
+                        <div id="chartContainer"></div>
                     </section>
                 </div>
             </div>
@@ -90,16 +102,38 @@
     </div>
 
     <script>
-        function sendLocation() {
-            const countrySelect = document.getElementById('countrySelect');
-            const selectedCountry = countrySelect.value;
+        document.addEventListener('DOMContentLoaded', function () {
+            const socket = io.connect('http://' + document.domain + ':' + location.port);
 
-            // Realiza una solicitud al backend para enviar el país seleccionado al servidor Flask
-            fetch(`/send-location/${selectedCountry}`, { method: 'POST' })
-                .then(response => response.json())
-                .then(data => console.log(data))
-                .catch(error => console.error('Error:', error));
-        }
+            socket.on('air_quality_data', function (data) {
+                // Aquí puedes procesar los datos y actualizar dinámicamente la página
+                console.log('Datos recibidos:', data);
+                // Ejemplo: Agregar los datos a una tabla en el área de datos históricos
+                updateHistoricalData(data);
+            });
+
+            function updateHistoricalData(data) {
+                // Obtener la tabla y el cuerpo de la tabla
+                const tableBody = document.getElementById('historicalDataTableBody');
+
+                // Crear una nueva fila y celdas con los datos recibidos
+                const newRow = document.createElement('tr');
+                const locationCell = document.createElement('td');
+                locationCell.textContent = data.location;
+                const parameterCell = document.createElement('td');
+                parameterCell.textContent = data.parameter;
+                const valueCell = document.createElement('td');
+                valueCell.textContent = data.value;
+
+                // Agregar celdas a la fila
+                newRow.appendChild(locationCell);
+                newRow.appendChild(parameterCell);
+                newRow.appendChild(valueCell);
+
+                // Agregar la fila al cuerpo de la tabla
+                tableBody.appendChild(newRow);
+            }
+        });
     </script>
 
 </body>
