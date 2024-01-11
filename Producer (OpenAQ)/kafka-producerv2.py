@@ -57,8 +57,7 @@ while True:
         )
 
         # Esperar diez segundos antes de obtener nuevos datos
-        time.sleep(10)  # Espera 1 segundo entre cada envío
-
+        time.sleep(10)  # Espera 10 segundo entre cada envío
     except Exception as e:
         print(f"Error al obtener/enviar datos: {e}")
 
