@@ -72,4 +72,3 @@ if __name__ == '__main__':
     # Iniciar el hilo de fondo para emitir datos a través de Socket.IO
     socketio.start_background_task(target=background_thread)
     socketio.run(app, debug=True, allow_unsafe_werkzeug=True, use_reloader=False)
-

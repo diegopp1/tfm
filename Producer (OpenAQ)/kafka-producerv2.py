@@ -60,6 +60,7 @@ while True:
                 value=json.dumps(air_quality_data).encode('utf-8'),
                 callback=delivery_report
             )
+            print("Enviando datos de calidad del aire a Kafka")
         else:
             logger.warning("No se pudieron obtener datos de calidad del aire. Reintentando en 60 segundos.")
 
