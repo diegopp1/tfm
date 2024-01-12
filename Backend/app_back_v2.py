@@ -1,44 +1,75 @@
-from fastapi import FastAPI, WebSocket
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
+from flask import Flask, render_template, jsonify
+from flask_socketio import SocketIO, emit
 import json
+from confluent_kafka import Consumer, KafkaError
+from queue import Queue
 
-app = FastAPI()
+app = Flask(__name__)
+socketio = SocketIO(app, threaded=True)  # Configuración para permitir múltiples conexiones simultáneas
 
-# Lista para almacenar los clientes WebSocket conectados
-websocket_clients = set()
+# Configuración del consumidor de Kafka
+kafka_conf = {
+    'bootstrap.servers': 'localhost:9092',  # Cambia esto según la configuración de tu clúster Kafka
+    'group.id': 'my_consumer_group',
+    'auto.offset.reset': 'earliest'
+}
+kafka_topic = 'topic-2'  # Cambia esto según el nombre del tema que creaste en el clúster Kafka
 
-# Montar el directorio "templates" como archivos estáticos para que FastAPI pueda servir el archivo HTML
-app.mount("/templates", StaticFiles(directory="templates", html=True), name="templates")
+# Crear un consumidor
+consumer = Consumer(kafka_conf)
 
-# Ruta para servir el archivo HTML
-@app.get("/", response_class=HTMLResponse)
-async def get():
-    return FileResponse("templates/index2.html")
+# Suscribirse a un tema
+consumer.subscribe([kafka_topic])
 
-# Ruta WebSocket para la transmisión de datos
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    # Agregar el cliente WebSocket a la lista
-    websocket_clients.add(websocket)
+# Cola para pasar mensajes entre hilos
+message_queue = Queue()
 
-    try:
-        while True:
-            # Esperar mensajes
-            data = await websocket.receive_text()
-            # Procesar datos (puedes hacer algo más avanzado aquí)
-            processed_data = {"received_data": data}
+# Ruta principal que renderiza la página web
+@app.route('/')
+def index():
+    return render_template('index2.html')
 
-            # Enviar datos a todos los clientes WebSocket conectados
-            for client in websocket_clients:
-                await client.send_text(json.dumps(processed_data))
-    except Exception as e:
-        print(f"Error en WebSocket: {e}")
-    finally:
-        # Eliminar el cliente WebSocket al salir
-        websocket_clients.remove(websocket)
+# Ruta para iniciar la transmisión de datos al hacer clic en el botón
+@app.route('/start-stream')
+def start_stream():
+    # Iniciar la transmisión
+    socketio.start_background_task(target=emit_data)
+    return jsonify({'status': 'success'})
 
-# Puedes ejecutar la aplicación con Uvicorn:
-# uvicorn nombre_de_tu_script:app --host 0.0.0.0 --port 8000 --reload
+# Función para emitir datos a través de Socket.IO
+def emit_data():
+    for msg in consumer:
+        if msg.error():
+            if msg.error().code() == KafkaError._PARTITION_EOF:
+                # No se encontraron nuevos mensajes
+                continue
+            else:
+                print(msg.error())
+                break
+
+        # Decodificar y procesar el mensaje JSON
+        try:
+            data = json.loads(msg.value().decode('utf-8'))
+            message_queue.put(data)  # Poner el mensaje en la cola
+        except Exception as e:
+            print(f"Error al procesar mensaje: {e}")
+
+# Función para obtener datos de la cola y emitirlos a través de Socket.IO
+def background_thread():
+    while True:
+        data = message_queue.get()  # Obtener datos de la cola
+        socketio.emit('air_quality_data', data)
+        print(f"Mensaje recibido de {kafka_topic}: {data}")
+        socketio.sleep(1)  # Esperar un segundo (ajusta según tu necesidad)
+
+# Manejar la conexión del cliente
+@socketio.on('connect')
+def handle_connect():
+    print('Cliente conectado')
+    emit('status', {'data': 'Conexión establecida'})
+
+if __name__ == '__main__':
+    # Iniciar el hilo de fondo para emitir datos a través de Socket.IO
+    socketio.start_background_task(target=background_thread)
+    socketio.run(app, debug=True, allow_unsafe_werkzeug=True, use_reloader=False)
 
