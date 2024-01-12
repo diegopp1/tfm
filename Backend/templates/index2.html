@@ -6,10 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IoT App - OpenAQ</title>
-
-    <!-- Enlaces a bibliotecas externas para gráficos, estilos y mapas interactivos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 
 <body>
@@ -29,21 +26,10 @@
 
     <div class="section">
         <div class="container">
-            <!-- Sección para mostrar datos en tiempo real -->
-            <section id="real-time-data" class="mt-5">
-                <h3 class="title is-3">Real-Time Data</h3>
-                <table id="realTimeDataTable" class="table">
-                    <thead>
-                        <tr>
-                            <th>Location</th>
-                            <th>Value</th>
-                            <th>Unit</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Las filas se agregarán dinámicamente mediante JavaScript -->
-                    </tbody>
-                </table>
+            <!-- Sección para mostrar datos en bruto -->
+            <section id="raw-data" class="mt-5">
+                <h3 class="title is-3">Raw Data</h3>
+                <ul id="rawDataList"></ul>
             </section>
         </div>
     </div>
@@ -56,22 +42,18 @@
                 // Aquí puedes procesar los datos y actualizar dinámicamente la página
                 const data = JSON.parse(event.data);
                 console.log('Datos recibidos:', data);
-                // Ejemplo: Agregar los datos a una tabla en el área de datos en tiempo real
-                updateRealTimeData(data);
+                // Ejemplo: Agregar los datos a una lista en el área de datos en bruto
+                updateRawData(data);
             };
 
-            function updateRealTimeData(data) {
-                // Implementa la lógica para agregar datos a la tabla de datos en tiempo real
-                // Por ejemplo, puedes crear filas y celdas de una tabla con los datos recibidos
-                // y agregarlas al área de datos en tiempo real en la página web.
-                const table = document.getElementById('realTimeDataTable');
-                const row = table.insertRow(-1);
-                const cell1 = row.insertCell(0);
-                const cell2 = row.insertCell(1);
-                const cell3 = row.insertCell(2);
-                cell1.innerHTML = data.location;
-                cell2.innerHTML = data.value;
-                cell3.innerHTML = data.unit;
+            function updateRawData(data) {
+                // Implementa la lógica para agregar datos a la lista de datos en bruto
+                // Por ejemplo, puedes crear elementos de lista con los datos recibidos
+                // y agregarlos al área de datos en bruto en la página web.
+                const list = document.getElementById('rawDataList');
+                const listItem = document.createElement('li');
+                listItem.textContent = JSON.stringify(data);
+                list.appendChild(listItem);
             }
         });
     </script>
@@ -79,6 +61,5 @@
 </body>
 
 </html>
-
 
 
