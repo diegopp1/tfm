@@ -1,5 +1,6 @@
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 import json
 
 app = FastAPI()
@@ -7,12 +8,13 @@ app = FastAPI()
 # Lista para almacenar los clientes WebSocket conectados
 websocket_clients = set()
 
+# Montar el directorio "templates" como archivos estáticos para que FastAPI pueda servir el archivo HTML
+app.mount("/templates", StaticFiles(directory="templates", html=True), name="templates")
+
 # Ruta para servir el archivo HTML
 @app.get("/", response_class=HTMLResponse)
 async def get():
-    return """
-    <!-- Tu HTML aquí -->
-    """
+    return FileResponse("templates/index2.html")
 
 # Ruta WebSocket para la transmisión de datos
 @app.websocket("/ws")
@@ -39,3 +41,4 @@ async def websocket_endpoint(websocket: WebSocket):
 
 # Puedes ejecutar la aplicación con Uvicorn:
 # uvicorn nombre_de_tu_script:app --host 0.0.0.0 --port 8000 --reload
+
