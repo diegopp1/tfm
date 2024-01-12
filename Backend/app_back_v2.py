@@ -1,66 +1,23 @@
-from flask import Flask, render_template, jsonify
-from flask_socketio import SocketIO
+from fastapi import FastAPI, WebSocket, Depends
+from kafka import KafkaConsumer
 import json
-from confluent_kafka import Consumer, KafkaError
 
-app = Flask(__name__)
-socketio = SocketIO(app, threaded=True)  # Configuración para permitir múltiples conexiones simultáneas
+app = FastAPI()
 
 # Configuración del consumidor de Kafka
-kafka_conf = {
-    'bootstrap.servers': 'localhost:9092',  # Cambia esto según la configuración de tu clúster Kafka
-    'group.id': 'my_consumer_group',
-    'auto.offset.reset': 'earliest'
-}
 kafka_topic = 'topic-2'  # Cambia esto según el nombre del tema que creaste en el clúster Kafka
+consumer = KafkaConsumer(kafka_topic, bootstrap_servers='localhost:9092', group_id='my_consumer_group', auto_offset_reset='earliest')
 
-# Crear un consumidor
-consumer = Consumer(kafka_conf)
+# WebSocket endpoint para la transmisión de datos
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
 
-# Suscribirse a un tema
-consumer.subscribe([kafka_topic])
-
-# Ruta principal que renderiza la página web
-@app.route('/')
-def index():
-    return render_template('index2.html')
-
-# Ruta para iniciar la transmisión de datos al hacer clic en el botón
-@app.route('/start-stream')
-def start_stream():
-    # Lógica para iniciar la transmisión de datos
-    # Puedes agregar aquí cualquier código necesario para empezar a producir datos
-    socketio.start_background_task(target=emit_data)
-    return jsonify({'status': 'success'})
-
-# Función para emitir datos a través de Socket.IO
-def emit_data():
-    try:
-        for msg in consumer:
-            if msg.error():
-                if msg.error().code() == KafkaError._PARTITION_EOF:
-                    # No se encontraron nuevos mensajes
-                    continue
-                else:
-                    print(msg.error())
-                    break
-
-            # Decodificar y procesar el mensaje JSON
+    # Ciclo para recibir datos del consumidor de Kafka y enviarlos al frontend
+    while True:
+        for message in consumer:
             try:
-                data = json.loads(msg.value().decode('utf-8'))
-                socketio.emit('air_quality_data', data)
-                print(f"Mensaje recibido de {kafka_topic}: {data}")
+                data = json.loads(message.value.decode('utf-8'))
+                await websocket.send_json(data)
             except Exception as e:
                 print(f"Error al procesar mensaje: {e}")
-
-            socketio.sleep(1)  # Esperar un segundo (ajusta según tu necesidad)
-
-    except KeyboardInterrupt:
-        pass
-
-    finally:
-        # Cerrar el consumidor al salir del bucle principal
-        consumer.close()
-
-if __name__ == '__main__':
-    socketio.run(app, debug=True, allow_unsafe_werkzeug=True, use_reloader=False)
