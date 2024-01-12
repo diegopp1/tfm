@@ -9,7 +9,8 @@
 
     <!-- Enlaces a bibliotecas externas para gráficos, estilos y mapas interactivos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 
 <body>
@@ -29,35 +30,56 @@
 
     <div class="section">
         <div class="container">
-            <!-- Sección para mostrar el dato en bruto -->
-            <section id="raw-data-section" class="mt-5">
-                <h3 class="title is-3">Raw Data</h3>
-                <div id="rawData" class="content"></div>
+            <!-- Sección para mostrar el mapa interactivo -->
+            <section id="map-section" class="mt-5">
+                <h3 class="title is-3">Interactive Map</h3>
+                <div id="map" style="height: 400px;"></div>
+                <!-- Puedes ajustar la altura del mapa según tus necesidades -->
             </section>
 
-            <!-- Botón para iniciar la transmisión de datos -->
-            <button class="button is-primary mt-3" onclick="startDataStreaming()">Start Data Streaming</button>
+            <!-- Sección para mostrar datos en tiempo real -->
+            <section id="real-time-data" class="mt-5">
+                <h3 class="title is-3">Real-Time Data</h3>
+                <table id="realTimeDataTable" class="table">
+                    <thead>
+                        <tr>
+                            <th>Location</th>
+                            <th>Value</th>
+                            <th>Unit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Las filas se agregarán dinámicamente mediante JavaScript -->
+                    </tbody>
+                </table>
+            </section>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const socket = io.connect('http://' + document.domain + ':' + location.port);
+            const socket = new WebSocket('ws://' + document.domain + ':8000/ws');
 
-            socket.on('air_quality_data', function (data) {
-                // Actualizar el área de dato en bruto
-                updateRawData(data);
-            });
+            socket.onmessage = function (event) {
+                // Aquí puedes procesar los datos y actualizar dinámicamente la página
+                const data = JSON.parse(event.data);
+                console.log('Datos recibidos:', data);
+                // Ejemplo: Agregar los datos a una tabla en el área de datos en tiempo real
+                updateRealTimeData(data);
+            };
 
-            function updateRawData(data) {
-                // Mostrar el dato en bruto en el área de dato en bruto
-                const rawDataDiv = document.getElementById('rawData');
-                rawDataDiv.innerHTML = JSON.stringify(data, null, 2);
-            }
-
-            // Función para iniciar la transmisión de datos al hacer clic en un botón
-            function startDataStreaming() {
-                fetch('/start-stream'); // Iniciar transmisión al hacer clic en el botón
+            function updateRealTimeData(data) {
+                // Implementa la lógica para agregar datos a la tabla de datos en tiempo real
+                // Por ejemplo, puedes crear filas y celdas de una tabla con los datos recibidos
+                // y agregarlas al área de datos en tiempo real en la página web.
+                const table = document.getElementById('realTimeDataTable');
+                const row = table.insertRow(-1);
+                const cell1 = row.insertCell(0);
+                const cell2 = row.insertCell(1);
+                const cell3 = row.insertCell(2);
+                cell1.innerHTML = data.location;
+                cell2.innerHTML = data.value;
+                cell3.innerHTML = data.unit;
             }
         });
     </script>
@@ -65,4 +87,5 @@
 </body>
 
 </html>
+
 
