@@ -1,44 +1,41 @@
-from fastapi import FastAPI, WebSocket, Depends
-from confluent_kafka import Consumer, KafkaException, KafkaError
+from fastapi import FastAPI, WebSocket
+from fastapi.responses import HTMLResponse
 import json
 
 app = FastAPI()
 
-# Configuración del consumidor de Kafka
-kafka_topic = 'topic-2'  # Cambia esto según el nombre del tema que creaste en el clúster Kafka
-conf = {
-    'bootstrap.servers': 'localhost:9092',  # Cambia esto según la configuración de tu clúster Kafka
-    'group.id': 'my_consumer_group',
-    'auto.offset.reset': 'earliest'
-}
-consumer = Consumer(conf)
-consumer.subscribe([kafka_topic])
+# Lista para almacenar los clientes WebSocket conectados
+websocket_clients = set()
 
-# WebSocket endpoint para la transmisión de datos
+# Ruta para servir el archivo HTML
+@app.get("/", response_class=HTMLResponse)
+async def get():
+    return """
+    <!-- Tu HTML aquí -->
+    """
+
+# Ruta WebSocket para la transmisión de datos
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
+    # Agregar el cliente WebSocket a la lista
+    websocket_clients.add(websocket)
 
-    # Ciclo para recibir datos del consumidor de Kafka y enviarlos al frontend
     try:
         while True:
-            msg = consumer.poll(1.0)
-            if msg is not None:
-                if msg.error():
-                    if msg.error().code() == KafkaError._PARTITION_EOF:
-                        # No se encontraron nuevos mensajes
-                        continue
-                    else:
-                        raise KafkaException(msg.error())
+            # Esperar mensajes
+            data = await websocket.receive_text()
+            # Procesar datos (puedes hacer algo más avanzado aquí)
+            processed_data = {"received_data": data}
 
-                # Decodificar y procesar el mensaje JSON
-                try:
-                    data = json.loads(msg.value().decode('utf-8'))
-                    await websocket.send_json(data)
-                except Exception as e:
-                    print(f"Error al procesar mensaje: {e}")
-    except KafkaException as ke:
-        print(f"Error en el consumidor de Kafka: {ke}")
+            # Enviar datos a todos los clientes WebSocket conectados
+            for client in websocket_clients:
+                await client.send_text(json.dumps(processed_data))
+    except Exception as e:
+        print(f"Error en WebSocket: {e}")
     finally:
-        consumer.close()
+        # Eliminar el cliente WebSocket al salir
+        websocket_clients.remove(websocket)
 
+# Puedes ejecutar la aplicación con Uvicorn:
+# uvicorn nombre_de_tu_script:app --host 0.0.0.0 --port 8000 --reload
