@@ -10,4 +10,6 @@ CoAPthon3==1.0.2
 flask==3.0.0
 flask_socketio==5.3.6
 fastapi==0.109.0
+uvicorn==0.25.0
+
 
