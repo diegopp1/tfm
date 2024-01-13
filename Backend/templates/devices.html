@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT App - Devices</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+</head>
+
+<body>
+    <section class="hero is-primary">
+        <div class="hero-body">
+            <div class="container">
+                <h1 class="title">
+                    IoT Data Dashboard - Devices
+                </h1>
+                <h2 class="subtitle">
+                    Real-time Air Quality Device Management
+                </h2>
+            </div>
+        </div>
+    </section>
+
+    <div class="section">
+        <div class="container">
+            <!-- Sección para mostrar información de dispositivos -->
+            <section id="device-info" class="mt-5">
+                <h3 class="title is-3">Device Information</h3>
+                <ul id="deviceInfoList">
+                    {% for device in devices %}
+                        <li>{{ device.locationId }} - {{ device.location }} - {{ device.country }}</li>
+                    {% endfor %}
+                </ul>
+            </section>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const socket = io.connect('http://' + document.domain + ':' + location.port);
+
+            socket.on('device_info', function (data) {
+                updateDeviceInfo(data);
+            });
+
+            function updateDeviceInfo(data) {
+                const list = document.getElementById('deviceInfoList');
+                list.innerHTML = '';  // Limpiar la lista antes de actualizar
+                data.devices.forEach(function (device) {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${device.locationId} - ${device.location} - ${device.country}`;
+                    list.appendChild(listItem);
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
