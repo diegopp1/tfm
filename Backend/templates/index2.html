@@ -1,4 +1,4 @@
-<!-- templates/index.html -->
+<!-- templates/index2.html -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -34,22 +34,17 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const socket = new WebSocket('ws://' + document.domain + ':8000/ws');
+            const socket = io.connect('http://' + document.domain + ':' + location.port);
 
-            socket.onmessage = function (event) {
-                // Aquí puedes procesar los datos y actualizar dinámicamente la página
-                const data = JSON.parse(event.data);
+            socket.on('air_quality_data', function (data) {
                 console.log('Datos recibidos:', data);
-                // Ejemplo: Agregar los datos a una lista en el área de datos en bruto
                 updateRawData(data);
-            };
+            });
 
             function updateRawData(data) {
-                // Implementa la lógica para agregar datos a la lista de datos en bruto
-                // Por ejemplo, puedes crear elementos de lista con los datos recibidos
-                // y agregarlos al área de datos en bruto en la página web.
                 const list = document.getElementById('rawDataList');
                 const listItem = document.createElement('li');
                 listItem.textContent = JSON.stringify(data);
@@ -61,5 +56,6 @@
 </body>
 
 </html>
+
 
 
