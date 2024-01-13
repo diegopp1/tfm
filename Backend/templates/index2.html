@@ -40,15 +40,15 @@
             const socket = io.connect('http://' + document.domain + ':' + location.port);
 
             socket.on('air_quality_data', function (data) {
-                console.log('Datos recibidos:', data);
+                console.log('Datos recibidos:', data); // Datos recibidos en la consola
                 updateRawData(data);
             });
 
             function updateRawData(data) {
-                const list = document.getElementById('rawDataList');
-                const listItem = document.createElement('li');
-                listItem.textContent = JSON.stringify(data);
-                list.appendChild(listItem);
+                const list = document.getElementById('rawDataList'); // Obtener el elemento <ul>
+                const listItem = document.createElement('li'); // Crear un elemento <li>
+                listItem.textContent = JSON.stringify(data); // Establecer el contenido de texto del elemento <li>
+                list.appendChild(listItem); // Agregar el elemento <li> al elemento <ul>
             }
         });
     </script>
