@@ -5,6 +5,7 @@ import json
 import logging
 import threading
 import subprocess
+import os
 
 app = Flask(__name__)
 socketio = SocketIO(app, threaded=True)
@@ -22,9 +23,6 @@ kafka_topic = 'datos'
 producer_conf = {
     'bootstrap.servers': 'localhost:9092'
 }
-
-# Crear el productor de Kafka
-producer = Producer(producer_conf)
 
 # Crear el consumidor de Kafka
 consumer = Consumer(kafka_conf)
@@ -81,7 +79,8 @@ def index():
 
 def start_producer():
     if not is_producer_running():
-        subprocess.Popen(['python', 'kafka-producerv3.py'])
+        script_path = 'C:\\Users\\Usuario\\PycharmProjects\\pythonProject2\\Producer (OpenAQ)\\kafka-producerv3.py'
+        subprocess.Popen(['python', script_path])
         print("Productor de Kafka iniciado.")
     else:
         print("El productor ya está en ejecución.")
@@ -100,3 +99,4 @@ def handle_connect():
 if __name__ == '__main__':
     socketio.start_background_task(target=background_thread)
     socketio.run(app, debug=True, allow_unsafe_werkzeug=True, use_reloader=False)
+
