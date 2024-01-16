@@ -96,5 +96,6 @@ def handle_connect():
 
 if __name__ == '__main__':
     socketio.start_background_task(target=background_thread)
-    socketio.run(app, debug=True, allow_unsafe_werkzeug=True, use_reloader=False)
+    socketio.run(app, debug=True, allow_unsafe_werkzeug=True, use_reloader=False) # Esta sentencia es necesaria para que el servidor Flask
+    # y el SocketIO funcionen correctamente
 
