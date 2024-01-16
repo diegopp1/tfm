@@ -40,7 +40,7 @@
             const socket = io.connect('http://' + document.domain + ':' + location.port);
 
             socket.on('air_quality_data', function (data) {
-                console.log('Datos recibidos:', data); // Datos recibidos en la consola
+                console.log('Datos recibidos:', data); // datos recibidos en la consola del navegador
                 updateRawData(data);
             });
 
