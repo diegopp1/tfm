@@ -86,9 +86,7 @@ def start_producer():
         print("El productor ya está en ejecución.")
 
 def is_producer_running():
-    # Lógica para verificar si el productor ya está en ejecución
-    # Puedes ajustar esta lógica según tus necesidades
-    # Puedes usar bibliotecas como psutil o consultar el sistema operativo
+    # Lógica para verificar si el script de Producer ya está en ejecución
     return False  # Devuelve True si el productor está en ejecución, False de lo contrario
 
 @socketio.on('connect')
