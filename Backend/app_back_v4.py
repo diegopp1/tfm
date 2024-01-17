@@ -58,7 +58,7 @@ def management():
     if data is not None:
         handle_devices(data)
         updated_devices = devices_by_location.get(data.get('location'), {}).get('devices', [])
-        return render_template('devices.html', devices=updated_devices)
+        return render_template('devices.html', devices=updated_devices) # Actualizar la página de dispositivos
     else:
         return render_template('devices.html', devices=[], error='No se han recibido datos de calidad del aire.')
 
