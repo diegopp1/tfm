@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT App - Data</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+</head>
+
+<body>
+    <section class="hero is-primary">
+        <div class="hero-body">
+            <div class="container">
+                <h1 class="title">
+                    IoT Data Dashboard - Data
+                </h1>
+                <h2 class="subtitle">
+                    Real-time Air Quality Data
+                </h2>
+            </div>
+        </div>
+    </section>
+
+    <div class="section">
+        <div class="container">
+            <!-- Sección para mostrar datos almacenados -->
+            <section id="stored-data" class="mt-5">
+                <h3 class="title is-3">Stored Data</h3>
+                <ul id="storedDataList">
+                    {% for entry in data %}
+                        <li>
+                            <strong>Location:</strong> {{ entry.location }}<br>
+                            <strong>Country:</strong> {{ entry.country }}<br>
+                            <strong>Measurements:</strong><br>
+                            <ul>
+                                {% for measurement in entry.measurements %}
+                                    <li>{{ measurement.parameter }}: {{ measurement.value }} {{ measurement.unit }}</li>
+                                {% endfor %}
+                            </ul>
+                            <strong>Last Updated:</strong> {{ entry.lastUpdated }}<br>
+                        </li>
+                        <hr>
+                    {% endfor %}
+                </ul>
+            </section>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const socket = io.connect('http://' + document.domain + ':' + location.port);
+            socket.on('connect', function () {
+                console.log('Conectado al servidor SocketIO!')
+            });
+
+            // Puedes agregar lógica adicional aquí si es necesario
+        });
+    </script>
+</body>
+
+</html>
