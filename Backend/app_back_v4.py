@@ -1,9 +1,8 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
-from confluent_kafka import Consumer, KafkaError
+from confluent_kafka import Consumer
 import json
 import logging
-import threading
 import subprocess
 
 app = Flask(__name__)

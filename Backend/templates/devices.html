@@ -49,7 +49,6 @@
 
             function updateDeviceInfo(data) {
                 const list = document.getElementById('deviceInfoList');
-                list.innerHTML = '';  // Limpiar la lista antes de actualizar
                 data.devices.forEach(function (device) {
                     const listItem = document.createElement('li');
                     listItem.textContent = `${device.location} - ${device.country}`;
