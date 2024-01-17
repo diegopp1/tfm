@@ -55,31 +55,33 @@ def index():
 
     return render_template('index2.html')
 
+
 @app.route('/management')
 def management():
     data = consume_message()
     if data is not None:
-        handle_devices(data)
-    return render_template('devices.html', devices=devices_by_location.values())
+        updated_devices = handle_devices(data)
+        return render_template('devices.html', devices=updated_devices)
+    else:
+        return render_template('devices.html', devices=[], error='No se han recibido datos de calidad del aire.')
 
 def handle_devices(data):
-    location_id = data.get('locationId')
+    location = data.get('location')
     country = data.get('country')
 
-    if location_id not in devices_by_location:
-        devices_by_location[location_id] = {
-            'locationId': location_id,
+    if location not in devices_by_location:
+        devices_by_location[location] = {
             'location': data.get('location'),
             'country': country,
             'devices': []
         }
 
-    devices = devices_by_location[location_id]['devices']
+    devices = devices_by_location[location]['devices']
     if data not in devices:
         devices.append(data)
 
-    socketio.emit('device_info', devices_by_location[location_id])
-    return devices_by_location[location_id]
+    socketio.emit('device_info', devices_by_location[location])
+    return devices_by_location[location]['devices']
 
 @socketio.on('connect')
 def handle_connect():

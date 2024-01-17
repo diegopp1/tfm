@@ -29,7 +29,7 @@
                 <h3 class="title is-3">Device Information</h3>
                 <ul id="deviceInfoList">
                     {% for device in devices %}
-                        <li>{{ device['locationId'] }} - {{ device['location'] }} - {{ device['country'] }}</li>
+                        <li>{{ device['location'] }} - {{ device['country'] }}</li>
                     {% endfor %}
                 </ul>
             </section>
@@ -52,7 +52,7 @@
                 list.innerHTML = '';  // Limpiar la lista antes de actualizar
                 data.devices.forEach(function (device) {
                     const listItem = document.createElement('li');
-                    listItem.textContent = `${device.locationId} - ${device.location} - ${device.country}`;
+                    listItem.textContent = `${device.location} - ${device.country}`;
                     list.appendChild(listItem);
                 });
             }
@@ -61,3 +61,4 @@
 </body>
 
 </html>
+
