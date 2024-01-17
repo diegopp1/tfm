@@ -22,7 +22,7 @@ kafka_topic = 'datos'
 consumer = Consumer(kafka_conf)
 consumer.subscribe([kafka_topic])
 
-devices_by_location = {}
+devices = []  # Lista global de dispositivos
 producer_running = False
 
 def consume_message():
@@ -41,6 +41,7 @@ def background_thread():
         data = consume_message()
         if data is not None:
             socketio.emit('air_quality_data', data)
+            handle_devices(data)
             socketio.sleep(1)
 
 @app.route('/')
@@ -50,34 +51,21 @@ def index():
         start_producer()
         producer_running = True
 
-    return render_template('index2.html')
+    return render_template('index2.html', devices=devices)
 
 @app.route('/management')
 def management():
     data = consume_message()
     if data is not None:
         handle_devices(data)
-        updated_devices = devices_by_location.get(data.get('location'), {}).get('devices', [])
-        return render_template('devices.html', devices=updated_devices) # Actualizar la página de dispositivos
-    else:
-        return render_template('devices.html', devices=[], error='No se han recibido datos de calidad del aire.')
+    return render_template('devices.html', devices=devices)
 
 def handle_devices(data):
-    location = data.get('location')
-    country = data.get('country')
-
-    if location not in devices_by_location:
-        devices_by_location[location] = {
-            'location': location,
-            'country': country,
-            'devices': []
-        }
-
-    devices = devices_by_location[location]['devices']
+    # Lógica para manejar dispositivos
     if data not in devices:
         devices.append(data)
-
-    socketio.emit('device_info', devices_by_location[location])
+    socketio.emit('device_info', devices)
+    socketio.emit('air_quality_data', data)  # Puedes agregar esta línea para emitir los datos a todas las conexiones
 
 @socketio.on('connect')
 def handle_connect():
