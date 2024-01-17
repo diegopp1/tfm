@@ -1,11 +1,10 @@
 from flask import Flask, render_template, jsonify
 from flask_socketio import SocketIO, emit
-from confluent_kafka import Producer, Consumer, KafkaError
+from confluent_kafka import Consumer, KafkaError
 import json
 import logging
 import threading
 import subprocess
-
 
 app = Flask(__name__)
 socketio = SocketIO(app, threaded=True)
@@ -19,7 +18,6 @@ kafka_conf = {
     'auto.offset.reset': 'earliest'
 }
 kafka_topic = 'datos'
-
 
 # Crear el consumidor de Kafka
 consumer = Consumer(kafka_conf)
@@ -55,12 +53,12 @@ def index():
 
     return render_template('index2.html')
 
-
 @app.route('/management')
 def management():
     data = consume_message()
     if data is not None:
-        updated_devices = handle_devices(data)
+        handle_devices(data)
+        updated_devices = devices_by_location.get(data.get('location'), {}).get('devices', [])
         return render_template('devices.html', devices=updated_devices)
     else:
         return render_template('devices.html', devices=[], error='No se han recibido datos de calidad del aire.')
@@ -71,7 +69,7 @@ def handle_devices(data):
 
     if location not in devices_by_location:
         devices_by_location[location] = {
-            'location': data.get('location'),
+            'location': location,
             'country': country,
             'devices': []
         }
@@ -81,7 +79,6 @@ def handle_devices(data):
         devices.append(data)
 
     socketio.emit('device_info', devices_by_location[location])
-    return devices_by_location[location]['devices']
 
 @socketio.on('connect')
 def handle_connect():
@@ -105,4 +102,3 @@ def is_producer_running():
 if __name__ == '__main__':
     socketio.start_background_task(target=background_thread)
     socketio.run(app, debug=True, allow_unsafe_werkzeug=True, use_reloader=False)
-
