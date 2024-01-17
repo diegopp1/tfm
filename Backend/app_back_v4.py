@@ -47,8 +47,23 @@ def background_thread():
         data = consume_message()
         if data is not None:
             socketio.emit('air_quality_data', data)
-            handle_devices(data)
             socketio.sleep(1)
+
+@app.route('/')
+def index():
+    global producer_running
+    if not producer_running:
+        start_producer()
+        producer_running = True
+
+    return render_template('index2.html')
+
+@app.route('/management')
+def management():
+    data = consume_message()
+    if data is not None:
+        handle_devices(data)
+    return render_template('devices.html', devices=devices_by_location.values())
 
 def handle_devices(data):
     location_id = data.get('locationId')
@@ -68,14 +83,10 @@ def handle_devices(data):
 
     socketio.emit('device_info', devices_by_location[location_id])
 
-@app.route('/')
-def index():
-    global producer_running
-    if not producer_running:
-        start_producer()
-        producer_running = True
-
-    return render_template('index2.html')
+@socketio.on('connect')
+def handle_connect():
+    print('Cliente conectado')
+    emit('status', {'data': 'Conexión establecida'})
 
 def start_producer():
     if not is_producer_running():
@@ -86,16 +97,12 @@ def start_producer():
         print("El productor ya está en ejecución.")
 
 def is_producer_running():
-    # Lógica para verificar si el script de Producer ya está en ejecución
+    # Lógica para verificar si el productor ya está en ejecución
+    # Puedes ajustar esta lógica según tus necesidades
+    # Puedes usar bibliotecas como psutil o consultar el sistema operativo
     return False  # Devuelve True si el productor está en ejecución, False de lo contrario
-
-@socketio.on('connect')
-def handle_connect():
-    print('Cliente conectado')
-    emit('status', {'data': 'Conexión establecida'})
 
 if __name__ == '__main__':
     socketio.start_background_task(target=background_thread)
-    socketio.run(app, debug=True, allow_unsafe_werkzeug=True, use_reloader=False) # Esta sentencia es necesaria para que el servidor Flask
-    # y el SocketIO funcionen correctamente
+    socketio.run(app, debug=True, allow_unsafe_werkzeug=True, use_reloader=False)
 
