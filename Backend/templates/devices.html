@@ -29,7 +29,7 @@
                 <h3 class="title is-3">Device Information</h3>
                 <ul id="deviceInfoList">
                     {% for device in devices %}
-                        <li>{{ device.locationId }} - {{ device.location }} - {{ device.country }}</li>
+                        <li>{{ device['locationId'] }} - {{ device['location'] }} - {{ device['country'] }}</li>
                     {% endfor %}
                 </ul>
             </section>
@@ -40,7 +40,9 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const socket = io.connect('http://' + document.domain + ':' + location.port);
-
+            socket.on('connect', function () {
+                console.log('Conectado al servidor SocketIO!')
+            });
             socket.on('device_info', function (data) {
                 updateDeviceInfo(data);
             });

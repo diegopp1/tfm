@@ -5,7 +5,7 @@ import json
 import logging
 import threading
 import subprocess
-import os
+
 
 app = Flask(__name__)
 socketio = SocketIO(app, threaded=True)
@@ -20,9 +20,6 @@ kafka_conf = {
 }
 kafka_topic = 'datos'
 
-producer_conf = {
-    'bootstrap.servers': 'localhost:9092'
-}
 
 # Crear el consumidor de Kafka
 consumer = Consumer(kafka_conf)
@@ -82,6 +79,7 @@ def handle_devices(data):
         devices.append(data)
 
     socketio.emit('device_info', devices_by_location[location_id])
+    return devices_by_location[location_id]
 
 @socketio.on('connect')
 def handle_connect():
