@@ -56,9 +56,14 @@
                     list.appendChild(listItem);
                 });
             }
+
+            // Agregar la siguiente sección para manejar los datos en tiempo real
+            socket.on('air_quality_data', function (data) {
+                // Aquí puedes actualizar la página o realizar acciones específicas con los datos recibidos
+                console.log('Datos de calidad del aire recibidos:', data);
+            });
         });
     </script>
 </body>
 
 </html>
-
