@@ -24,14 +24,33 @@
 
     <div class="section">
         <div class="container">
-            <!-- Sección para mostrar información de dispositivos -->
             <section id="device-info" class="mt-5">
                 <h3 class="title is-3">Device Information</h3>
                 <ul id="deviceInfoList">
                     {% for device in devices %}
-                        <li>{{ device['location'] }} - {{ device['country'] }}</li>
+                        <li id="device-{{ device.id }}">
+                            {{ device['location'] }} - {{ device['country'] }}
+                            <button class="button is-danger is-small" onclick="deleteDevice('{{ device.id }}')">Delete</button>
+                        </li>
                     {% endfor %}
                 </ul>
+            </section>
+
+            <section id="add-device" class="mt-5">
+                <h3 class="title is-3">Add Device</h3>
+                <form onsubmit="return addDevice()">
+                    <div class="field is-grouped">
+                        <p class="control">
+                            <input class="input" type="text" placeholder="Location" id="locationInput" required>
+                        </p>
+                        <p class="control">
+                            <input class="input" type="text" placeholder="Country" id="countryInput" required>
+                        </p>
+                        <p class="control">
+                            <button type="submit" class="button is-success">Add</button>
+                        </p>
+                    </div>
+                </form>
             </section>
         </div>
     </div>
@@ -39,29 +58,38 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const socket = io.connect('http://' + document.domain + ':' + location.port);
-            socket.on('connect', function () {
-                console.log('Conectado al servidor SocketIO!')
-            });
-            socket.on('device_info', function (data) {
-                updateDeviceInfo(data);
-            });
+            // ... (código existente) ...
 
-            function updateDeviceInfo(data) {
-                const list = document.getElementById('deviceInfoList');
-                list.innerHTML = '';  // Limpiar la lista antes de actualizar
-                data.devices.forEach(function (device) {
-                    const listItem = document.createElement('li');
-                    listItem.textContent = `${device.location} - ${device.country}`;
-                    list.appendChild(listItem);
-                });
+            function deleteDevice(deviceId) {
+                // Implementa la lógica para enviar una solicitud al backend para eliminar el dispositivo con el ID especificado
+                console.log('Eliminar dispositivo con ID:', deviceId);
             }
 
-            // Agregar la siguiente sección para manejar los datos en tiempo real
-            socket.on('air_quality_data', function (data) {
-                // Aquí puedes actualizar la página o realizar acciones específicas con los datos recibidos
-                console.log('Datos de calidad del aire recibidos:', data);
-            });
+            function addDevice() {
+                const locationInput = document.getElementById('locationInput');
+                const countryInput = document.getElementById('countryInput');
+
+                // Validar que los campos no estén vacíos
+                if (!locationInput.value || !countryInput.value) {
+                    alert('Por favor, complete ambos campos.');
+                    return false;
+                }
+
+                // Implementa la lógica para enviar una solicitud al backend para agregar un nuevo dispositivo
+                const newDevice = {
+                    id: Date.now(), // Puedes generar un ID único aquí
+                    location: locationInput.value,
+                    country: countryInput.value
+                };
+
+                console.log('Agregar nuevo dispositivo:', newDevice);
+
+                // Limpia los campos después de agregar
+                locationInput.value = '';
+                countryInput.value = '';
+
+                return false; // Evita que el formulario se envíe normalmente
+            }
         });
     </script>
 </body>

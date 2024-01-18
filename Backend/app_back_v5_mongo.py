@@ -78,16 +78,31 @@ def index():
 
     return render_template('index2.html')
 
-@app.route('/management')
-def management():
-    data = consume_message()
-    if data is not None:
-        handle_devices(data)
-        updated_devices = devices_by_location.get(data.get('location'), {}).get('devices', [])
-        return render_template('devices.html', devices=updated_devices) # Actualizar la página de dispositivos
-    else:
-        return render_template('devices.html', devices=[], error='No se han recibido datos de calidad del aire.')
+devices = []  # Lista global de dispositivos
+device_id_counter = 1  # Inicializar un contador para generar IDs únicos
 
+@app.route('/management', methods=['GET', 'POST'])
+def management():
+    global device_id_counter
+
+    if request.method == 'POST':
+        # Agregar dispositivo
+        new_device = {
+            'id': device_id_counter,
+            'location': request.form['location'],
+            'country': request.form['country']
+        }
+        devices.append(new_device)
+        device_id_counter += 1
+        socketio.emit('device_info', {'devices': devices}, broadcast=True)
+
+    elif request.method == 'GET' and 'delete_device' in request.args:
+        # Eliminar dispositivo
+        device_id = int(request.args['delete_device'])
+        devices = [device for device in devices if device['id'] != device_id]
+        socketio.emit('device_info', {'devices': devices}, broadcast=True)
+
+    return render_template('devices.html', devices=devices)
 @app.route('/data')
 def data():
     # Obtener todos los datos almacenados en MongoDB
