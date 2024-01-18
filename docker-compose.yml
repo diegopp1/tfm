@@ -71,7 +71,7 @@ services:
       - cmongo.env
     environment:
       MONGO_INITDB_ROOT_USERNAME: diegopp1
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_ROOT_PASSWORD: MONGO_ROOT_PASSWORD
       MONGO_INITDB_DATABASE: tfm_dpp
 networks:
   default:
