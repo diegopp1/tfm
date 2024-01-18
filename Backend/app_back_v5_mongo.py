@@ -1,10 +1,11 @@
 from flask import Flask, render_template, jsonify
 from flask_socketio import SocketIO, emit
-from confluent_kafka import Consumer
+from confluent_kafka import Consumer, KafkaException
 from pymongo.mongo_client import MongoClient
 import json
 import logging
 import subprocess
+from decouple import config
 
 app = Flask(__name__)
 socketio = SocketIO(app, threaded=True)
@@ -21,7 +22,8 @@ kafka_conf = {
 kafka_topic = 'datos'
 
 # Configuración de MongoDB
-mongo_uri = "mongodb+srv://diegopp1:Contra-1995-aplic@cluster0.omhmfeu.mongodb.net/?retryWrites=true&w=majority"
+mongo_password = config('MONGO_PASSWORD', default='')
+mongo_uri = f"mongodb+srv://diegopp1:{mongo_password}@cluster0.omhmfeu.mongodb.net/?retryWrites=true&w=majority"
 mongo_client = MongoClient(mongo_uri)
 
 try:
@@ -30,28 +32,34 @@ try:
     logger.info("Conexión a MongoDB establecida exitosamente!")
 except Exception as e:
     logger.error("Error conectando a MongoDB:", e)
+    raise SystemExit("No se pudo conectar a MongoDB. Saliendo...")
 
 mongo_db = mongo_client['iot_data']
 mongo_collection = mongo_db['air_quality']
 
 # Crear el consumidor de Kafka
 consumer = Consumer(kafka_conf)
-consumer.subscribe([kafka_topic])
+
+try:
+    consumer.subscribe([kafka_topic])
+except KafkaException as e:
+    logger.error("Error al suscribirse al tema de Kafka:", e)
+    raise SystemExit("No se pudo suscribir al tema de Kafka. Saliendo...")
 
 devices_by_location = {}
 producer_running = False
 
 def consume_message():
-    msg = consumer.poll(1.0)
-    if msg is not None and not msg.error():
-        try:
+    try:
+        msg = consumer.poll(1.0)
+        if msg is not None and not msg.error():
             data = json.loads(msg.value().decode('utf-8'))
             logger.info("Datos recibidos: {}".format(data))
             # Guardar datos en MongoDB
             mongo_collection.insert_one(data)
             return data
-        except Exception as e:
-            logger.error(f"Error al procesar mensaje: {e}")
+    except Exception as e:
+        logger.error(f"Error al procesar mensaje de Kafka: {e}")
     return None
 
 def background_thread():
@@ -129,4 +137,5 @@ def is_producer_running():
 if __name__ == '__main__':
     socketio.start_background_task(target=background_thread)
     socketio.run(app, debug=True, allow_unsafe_werkzeug=True, use_reloader=False)
+
 
