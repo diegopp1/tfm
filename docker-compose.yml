@@ -69,6 +69,8 @@ services:
       - ./mongo:/data/db
     environment:
       MONGO_INITDB_DATABASE: tfm_dpp
+      MONGO_INITDB_ROOT_USERNAME: diegopp1
+      MONGO_INITDB_ROOT_PASSWORD: Contra-1995-aplic
 networks:
   default:
     name: tfm_dpp
