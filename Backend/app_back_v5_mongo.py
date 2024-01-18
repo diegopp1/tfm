@@ -21,7 +21,7 @@ kafka_conf = {
 kafka_topic = 'datos'
 
 # Configuración de MongoDB
-mongo_client = MongoClient('mongodb://localhost:27017/')
+mongo_client = MongoClient('mongodb://diegopp1:Contra-1995-aplic@localhost:27017/')
 mongo_db = mongo_client['iot_data']
 mongo_collection = mongo_db['air_quality']
 
@@ -76,7 +76,6 @@ def data():
     # Obtener todos los datos almacenados en MongoDB
     stored_data = list(mongo_collection.find())
     return render_template('data.html', data=stored_data)
-
 def handle_devices(data):
     location = data.get('location')
     country = data.get('country')
