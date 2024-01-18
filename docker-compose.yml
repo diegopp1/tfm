@@ -67,6 +67,8 @@ services:
       - "27017:27017"
     volumes:
       - ./mongo:/data/db
+    env_file:
+      - cmongo.env
     environment:
       MONGO_INITDB_ROOT_USERNAME: diegopp1
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
