@@ -61,15 +61,15 @@ services:
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: "broker:29092"
   mongo:
-    image: mongo:6.0.3
+    image: mongo:6.0.12
     container_name: mongo_tfm
     ports:
       - "27017:27017"
     volumes:
       - ./mongo:/data/db
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_ROOT_USERNAME: diegopp1
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
       MONGO_INITDB_DATABASE: tfm_dpp
 networks:
   default:
