@@ -1,7 +1,7 @@
 from flask import Flask, render_template, jsonify
 from flask_socketio import SocketIO, emit
 from confluent_kafka import Consumer
-from pymongo import MongoClient
+from pymongo.mongo_client import MongoClient
 import json
 import logging
 import subprocess
@@ -21,7 +21,16 @@ kafka_conf = {
 kafka_topic = 'datos'
 
 # Configuración de MongoDB
-mongo_client = MongoClient('mongodb://diegopp1:Contra-1995-aplic@localhost:27017/')
+mongo_uri = "mongodb+srv://diegopp1:Contra-1995-aplic@cluster0.omhmfeu.mongodb.net/?retryWrites=true&w=majority"
+mongo_client = MongoClient(mongo_uri)
+
+try:
+    # Verificación de la conexión a MongoDB al iniciar la aplicación
+    mongo_client.admin.command('ping')
+    logger.info("Conexión a MongoDB establecida exitosamente!")
+except Exception as e:
+    logger.error("Error conectando a MongoDB:", e)
+
 mongo_db = mongo_client['iot_data']
 mongo_collection = mongo_db['air_quality']
 
@@ -76,6 +85,7 @@ def data():
     # Obtener todos los datos almacenados en MongoDB
     stored_data = list(mongo_collection.find())
     return render_template('data.html', data=stored_data)
+
 def handle_devices(data):
     location = data.get('location')
     country = data.get('country')
@@ -98,6 +108,10 @@ def handle_connect():
     print('Cliente conectado')
     emit('status', {'data': 'Conexión establecida'})
 
+@socketio.on('disconnect')
+def handle_disconnect():
+    print('Cliente desconectado')
+
 def start_producer():
     if not is_producer_running():
         script_path = 'C:\\Users\\Usuario\\PycharmProjects\\pythonProject2\\Producer (OpenAQ)\\kafka-producerv3.py'
@@ -115,3 +129,4 @@ def is_producer_running():
 if __name__ == '__main__':
     socketio.start_background_task(target=background_thread)
     socketio.run(app, debug=True, allow_unsafe_werkzeug=True, use_reloader=False)
+
