@@ -1,3 +1,4 @@
+<!-- templates/index2.html -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -30,20 +31,6 @@
                 <h3 class="title is-3">Raw Data</h3>
                 <ul id="rawDataList"></ul>
             </section>
-
-            <section id="select-country" class="mt-5">
-                <h3 class="title is-3">Select Country</h3>
-                <form onsubmit="return updateCountry()">
-                    <div class="field is-grouped">
-                        <p class="control">
-                            <input class="input" type="text" placeholder="Enter Country Code" id="countryInput" required>
-                        </p>
-                        <p class="control">
-                            <button type="submit" class="button is-primary">Update Country</button>
-                        </p>
-                    </div>
-                </form>
-            </section>
         </div>
     </div>
 
@@ -63,27 +50,12 @@
                 listItem.textContent = JSON.stringify(data); // Establecer el contenido de texto del elemento <li>
                 list.appendChild(listItem); // Agregar el elemento <li> al elemento <ul>
             }
-
-            function updateCountry() {
-                const countryInput = document.getElementById('countryInput').value;
-                // Enviar el país al servidor usando una solicitud AJAX o similar
-                fetch(`/update_country?country=${countryInput}`, { method: 'POST' })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! Status: ${response.status}`);
-                        }
-                        // Actualizar el país en el frontend si la solicitud es exitosa
-                        alert(`Country updated to: ${countryInput}`);
-                    })
-                    .catch(error => {
-                        console.error('Fetch error:', error);
-                        alert('Error updating country. Please try again.');
-                    });
-                return false;  // Evita que el formulario se envíe normalmente
-            }
         });
     </script>
 
 </body>
 
 </html>
+
+
+
