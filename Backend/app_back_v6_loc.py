@@ -13,14 +13,6 @@ socketio = SocketIO(app, threaded=True)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('consumer')
 
-# Configuración de Kafka
-kafka_conf = {
-    'bootstrap.servers': 'localhost:9092',
-    'group.id': 'my_consumer_group',
-    'auto.offset.reset': 'earliest'
-}
-kafka_topic = 'datos'
-
 # Configuración de MongoDB
 mongo_password = config('MONGO_PASSWORD', default='')
 mongo_uri = f"mongodb+srv://diegopp1:{mongo_password}@cluster0.omhmfeu.mongodb.net/?retryWrites=true&w=majority"
@@ -39,23 +31,20 @@ mongo_air_quality_collection = mongo_db['air_quality']
 mongo_locations_collection = mongo_db['locations']
 
 # Crear el consumidor de Kafka
-consumer = Consumer(kafka_conf)
+consumer = Consumer({
+    'bootstrap.servers': 'localhost:9092',
+    'group.id': 'my_consumer_group',
+    'auto.offset.reset': 'earliest'
+})
 
 try:
-    consumer.subscribe([kafka_topic])
+    consumer.subscribe(['locations', 'datos'])
 except KafkaException as e:
-    logger.error("Error al suscribirse al tema de Kafka:", e)
-    raise SystemExit("No se pudo suscribir al tema de Kafka. Saliendo...")
+    logger.error("Error al suscribirse a los temas de Kafka:", e)
+    raise SystemExit("No se pudo suscribir a los temas de Kafka. Saliendo...")
 
 devices_by_location = {}
 producer_running = False
-
-# Configuración del segundo productor de Kafka
-second_producer_conf = {
-    'bootstrap.servers': 'localhost:9092',  # Cambia esto según la configuración de tu clúster Kafka
-}
-second_producer = Producer(second_producer_conf)
-second_producer_topic = 'locations'
 
 def consume_message():
     try:
@@ -63,12 +52,11 @@ def consume_message():
         if msg is not None and not msg.error():
             data = json.loads(msg.value().decode('utf-8'))
             logger.info("Datos recibidos: {}".format(data))
-            # Guardar datos en MongoDB en la colección air_quality
-            mongo_air_quality_collection.insert_one(data)
             return data
     except Exception as e:
         logger.error(f"Error al procesar mensaje de Kafka: {e}")
     return None
+
 
 def background_thread():
     while True:
@@ -82,21 +70,24 @@ def background_thread():
 
 @app.route('/')
 def index():
-    global producer_running
-    if not producer_running:
+    global is_producer_running
+    if not is_producer_running:
         start_producer()
-        producer_running = True
-
+        is_producer_running = True
     return render_template('index2.html')
 
 @app.route('/locations')
 def locations():
+    global is_second_producer_running
+    if not is_second_producer_running:
+        start_second_producer()
+        is_second_producer_running = True
     return render_template('locations.html')
 
 @app.route('/generate', methods=['POST'])
 def generate_data():
-    selected_country = request.form.get('country')
-    start_second_producer(selected_country)
+    selected_country = request.form.get('country') # Obtener el país seleccionado por el usuario
+    start_second_producer(selected_country) # Iniciar el segundo productor de Kafka
     return 'Generating data...'
 
 devices = []  # Lista global de dispositivos
@@ -114,13 +105,12 @@ def handle_devices(data):
         }
 
     devices = devices_by_location[location]['devices']
-    if data not in devices:
+    if data not in devices: # Evitar duplicados
         devices.append(data)
-
         # Guardar datos del dispositivo en la colección locations
         mongo_locations_collection.insert_one(data)
 
-    socketio.emit('device_info', devices_by_location[location])
+    socketio.emit('devices', devices_by_location[location]) # Emitir los dispositivos de la ubicación
 
 @socketio.on('connect')
 def handle_connect():

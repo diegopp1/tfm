@@ -17,7 +17,7 @@ conf = {
 producer = Producer(conf)
 
 # Nombre del tema de Kafka
-kafka_topic = 'datos'
+kafka_topic = 'locations'
 
 # API Key de OpenAQ (reemplaza 'your-openaq-api-key' con tu clave real)
 openaq_api_key = '83fcfc1c531d71a7290846eb31fd75b91a3f1cd85653f2fef21f5140e2371746'
