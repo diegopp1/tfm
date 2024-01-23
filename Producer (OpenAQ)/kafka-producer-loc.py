@@ -25,21 +25,18 @@ openaq_api_key = '83fcfc1c531d71a7290846eb31fd75b91a3f1cd85653f2fef21f5140e23717
 # URL base de la API de OpenAQ para obtener datos de calidad del aire por país
 openaq_data_url = "https://api.openaq.org/v2/locations?limit=10&page=1&offset=0&sort=desc&parameter=&radius=1000&country={}&order_by=lastUpdated&dump_raw=false"
 
-
 def fetch_openaq_data(country):
     try:
         response = requests.get(openaq_data_url.format(country), headers={"X-API-Key": openaq_api_key})
 
         if response.status_code == 200:
-            return response.json().get('results', [])  # Usar get para manejar posibles respuestas sin 'results'
+            return response.json()['results']
         else:
-            logger.error(
-                f"Error al obtener datos de calidad del aire de OpenAQ. Código de estado: {response.status_code}")
+            logger.error(f"Error al obtener datos de calidad del aire de OpenAQ. Código de estado: {response.status_code}")
             return None
     except Exception as e:
         logger.error(f"Error en la solicitud a la API de OpenAQ: {e}")
         return None
-
 
 def delivery_report(err, msg):
     if err is not None:
@@ -49,18 +46,17 @@ def delivery_report(err, msg):
         # Imprimir el contenido del mensaje (clave y valor)
         logger.info('Contenido del mensaje: Key: {}, Value: {}'.format(msg.key(), msg.value()))
 
-
 # Función para obtener el país seleccionado (puedes personalizar esto según tu aplicación)
-def get_selected_country(request):
-    return request.form.get('country', 'US')  # Valor predeterminado 'US' si no se proporciona un país
-
+def get_selected_country():
+    # Por ahora, se devuelve 'US' como valor predeterminado.
+    return 'US'
 
 # Bucle principal para enviar datos de OpenAQ al tema de Kafka
 while True:
     try:
-        selected_country = get_selected_country(request)
+        selected_country = get_selected_country()
         openaq_data = fetch_openaq_data(selected_country)
-
+        print(openaq_data)
         if openaq_data is not None:
             # Enviar datos al tema de Kafka
             for data_entry in openaq_data:
