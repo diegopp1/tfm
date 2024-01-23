@@ -65,7 +65,7 @@ while True:
             logger.warning("No se pudieron obtener datos de calidad del aire. Reintentando en 60 segundos.")
 
         # Esperar diez segundos antes de obtener nuevos datos
-        time.sleep(10)  # Espera 10 segundos entre cada envío
+        time.sleep(6000)  # Espera 100 minutos entre cada envío, de esta manera aseguramos nuevos datos en cada envío
     except Exception as e:
         logger.error(f"Error al obtener/enviar datos: {e}")
 

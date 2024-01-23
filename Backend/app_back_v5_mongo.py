@@ -1,7 +1,8 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit
 from confluent_kafka import Consumer, KafkaException
 from pymongo.mongo_client import MongoClient
+from bson import ObjectId
 import json
 import logging
 import subprocess
@@ -66,7 +67,10 @@ def background_thread():
     while True:
         data = consume_message()
         if data is not None:
+            # Convertir ObjectId a cadena antes de emitir
+            data['_id'] = str(data['_id'])
             socketio.emit('air_quality_data', data)
+            handle_devices(data)
             socketio.sleep(1)
 
 @app.route('/')
@@ -84,7 +88,7 @@ device_id_counter = 1  # Inicializar un contador para generar IDs únicos
 @app.route('/management', methods=['GET', 'POST'])
 def management():
     global device_id_counter
-
+    global devices
     if request.method == 'POST':
         # Agregar dispositivo
         new_device = {
