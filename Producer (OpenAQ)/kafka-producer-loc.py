@@ -22,15 +22,13 @@ kafka_topic = 'locations'
 # API Key de OpenAQ (reemplaza 'your-openaq-api-key' con tu clave real)
 openaq_api_key = '83fcfc1c531d71a7290846eb31fd75b91a3f1cd85653f2fef21f5140e2371746'
 
-# URL base de la API de OpenAQ para obtener datos de calidad del aire por país
-openaq_data_url = "https://api.openaq.org/v2/locations?limit=10&page=1&offset=0&sort=desc&parameter=&radius=1000&country={}&order_by=lastUpdated&dump_raw=false"
-
 def fetch_openaq_data(country):
+    openaq_data_url = f"https://api.openaq.org/v2/locations?limit=100&page=1&offset=0&sort=desc&parameter=&radius=1000&country={country}&order_by=lastUpdated&dump_raw=false"
     try:
-        response = requests.get(openaq_data_url.format(country), headers={"X-API-Key": openaq_api_key})
+        response = requests.get(openaq_data_url, headers={"X-API-Key": openaq_api_key})
 
         if response.status_code == 200:
-            return response.json()['results']
+            return response.json().get('results', [])
         else:
             logger.error(f"Error al obtener datos de calidad del aire de OpenAQ. Código de estado: {response.status_code}")
             return None
