@@ -1,0 +1,58 @@
+<!-- templates/locations.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT App - Locations</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+</head>
+
+<body>
+
+    <section class="hero is-primary">
+        <div class="hero-body">
+            <div class="container">
+                <h1 class="title">
+                    IoT Data Dashboard - Locations
+                </h1>
+                <h2 class="subtitle">
+                    Generate OpenAQ Data
+                </h2>
+            </div>
+        </div>
+    </section>
+
+    <div class="section">
+        <div class="container">
+            <section id="generate-data" class="mt-5">
+                <h3 class="title is-3">Generate OpenAQ Data</h3>
+                <form method="post" action="{{ url_for('generate_data') }}">
+                    <div class="field is-grouped">
+                        <p class="control">
+                            <label for="countryInput" class="label">Country:</label>
+                            <input class="input" type="text" placeholder="Country Code" id="countryInput" name="country" required>
+                        </p>
+                        <p class="control">
+                            <button type="submit" class="button is-success">Generate Data</button>
+                        </p>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const socket = io.connect('http://' + document.domain + ':' + location.port);
+
+            // Agregar lógica para manejar los datos recibidos en tiempo real (si es necesario)
+
+        });
+    </script>
+
+</body>
+
+</html>
