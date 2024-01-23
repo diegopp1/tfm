@@ -49,7 +49,7 @@ def delivery_report(err, msg):
 # Función para obtener el país seleccionado (puedes personalizar esto según tu aplicación)
 def get_selected_country():
     # Por ahora, se devuelve 'US' como valor predeterminado.
-    return selected_country or 'US'
+    return 'US'
 
 # Bucle principal para enviar datos de OpenAQ al tema de Kafka
 while True:
@@ -72,10 +72,9 @@ while True:
             logger.warning("No se pudieron obtener datos de calidad del aire. Reintentando en 60 segundos.")
 
         # Esperar diez minutos antes de obtener nuevos datos
-        time.sleep(10)
+        time.sleep(600)
     except Exception as e:
         logger.error(f"Error al obtener/enviar datos: {e}")
 
 # Cerrar el productor al salir del bucle principal
 producer.flush()
-

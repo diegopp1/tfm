@@ -88,8 +88,6 @@ def locations():
         sec_producer_running = True
     return render_template('locations.html')
 
-
-
 @app.route('/generate', methods=['POST'])
 def generate_data():
     selected_country = request.form.get('country')  # Obtener el país seleccionado por el usuario
