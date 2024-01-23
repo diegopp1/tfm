@@ -2,7 +2,6 @@ from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit
 from confluent_kafka import Consumer, KafkaException, Producer
 from pymongo.mongo_client import MongoClient
-from bson import ObjectId
 import json
 import logging
 import subprocess
@@ -36,7 +35,8 @@ except Exception as e:
     raise SystemExit("No se pudo conectar a MongoDB. Saliendo...")
 
 mongo_db = mongo_client['iot_data']
-mongo_collection = mongo_db['air_quality']
+mongo_air_quality_collection = mongo_db['air_quality']
+mongo_locations_collection = mongo_db['locations']
 
 # Crear el consumidor de Kafka
 consumer = Consumer(kafka_conf)
@@ -63,8 +63,8 @@ def consume_message():
         if msg is not None and not msg.error():
             data = json.loads(msg.value().decode('utf-8'))
             logger.info("Datos recibidos: {}".format(data))
-            # Guardar datos en MongoDB
-            mongo_collection.insert_one(data)
+            # Guardar datos en MongoDB en la colección air_quality
+            mongo_air_quality_collection.insert_one(data)
             return data
     except Exception as e:
         logger.error(f"Error al procesar mensaje de Kafka: {e}")
@@ -95,40 +95,12 @@ def locations():
 
 @app.route('/generate', methods=['POST'])
 def generate_data():
-    start_second_producer()
+    selected_country = request.form.get('country')
+    start_second_producer(selected_country)
     return 'Generating data...'
 
 devices = []  # Lista global de dispositivos
 device_id_counter = 1  # Inicializar un contador para generar IDs únicos
-
-@app.route('/management', methods=['GET', 'POST'])
-def management():
-    global device_id_counter
-    global devices
-    if request.method == 'POST':
-        # Agregar dispositivo
-        new_device = {
-            'id': device_id_counter,
-            'location': request.form['location'],
-            'country': request.form['country']
-        }
-        devices.append(new_device)
-        device_id_counter += 1
-        socketio.emit('device_info', {'devices': devices}, broadcast=True)
-
-    elif request.method == 'GET' and 'delete_device' in request.args:
-        # Eliminar dispositivo
-        device_id = int(request.args['delete_device'])
-        devices = [device for device in devices if device['id'] != device_id]
-        socketio.emit('device_info', {'devices': devices}, broadcast=True)
-
-    return render_template('devices.html', devices=devices)
-
-@app.route('/data')
-def data():
-    # Obtener todos los datos almacenados en MongoDB
-    stored_data = list(mongo_collection.find())
-    return render_template('data.html', data=stored_data)
 
 def handle_devices(data):
     location = data.get('location')
@@ -144,6 +116,9 @@ def handle_devices(data):
     devices = devices_by_location[location]['devices']
     if data not in devices:
         devices.append(data)
+
+        # Guardar datos del dispositivo en la colección locations
+        mongo_locations_collection.insert_one(data)
 
     socketio.emit('device_info', devices_by_location[location])
 
@@ -164,10 +139,10 @@ def start_producer():
     else:
         print("El productor ya está en ejecución.")
 
-def start_second_producer():
+def start_second_producer(country):
     if not is_second_producer_running():
         script_path = 'C:\\Users\\Usuario\\PycharmProjects\\pythonProject2\\Producer (OpenAQ)\\kafka-producer-loc.py'
-        subprocess.Popen(['python', script_path])
+        subprocess.Popen(['python', script_path, country])
         print("Segundo productor de Kafka iniciado.")
     else:
         print("El segundo productor ya está en ejecución.")
