@@ -10,6 +10,9 @@ from decouple import config
 app = Flask(__name__)
 socketio = SocketIO(app, threaded=True)
 
+producer_running = False
+sec_producer_running = False
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('consumer')
 
@@ -44,7 +47,6 @@ except KafkaException as e:
     raise SystemExit("No se pudo suscribir a los temas de Kafka. Saliendo...")
 
 devices_by_location = {}
-producer_running = False
 
 def consume_message():
     try:
@@ -62,36 +64,44 @@ def background_thread():
     while True:
         data = consume_message()
         if data is not None:
-            # Convertir ObjectId a cadena antes de emitir
-            data['_id'] = str(data['_id'])
+            # Verificar si '_id' está presente en el diccionario
+            if '_id' in data:
+                # Convertir ObjectId a cadena antes de emitir
+                data['_id'] = str(data['_id'])
             socketio.emit('air_quality_data', data)
             handle_devices(data)
             socketio.sleep(1)
 
 @app.route('/')
 def index():
-    global is_producer_running
-    if not is_producer_running:
+    global producer_running
+    if not producer_running:
         start_producer()
-        is_producer_running = True
+        producer_running = True
     return render_template('index2.html')
-
 @app.route('/locations')
 def locations():
-    global is_second_producer_running
-    if not is_second_producer_running:
-        start_second_producer()
-        is_second_producer_running = True
+    global sec_producer_running
+    selected_country = request.args.get('country')  # Cambiado de request.form a request.args
+    if not sec_producer_running:
+        start_second_producer(selected_country)
+        sec_producer_running = True
     return render_template('locations.html')
+
+
 
 @app.route('/generate', methods=['POST'])
 def generate_data():
-    selected_country = request.form.get('country') # Obtener el país seleccionado por el usuario
-    start_second_producer(selected_country) # Iniciar el segundo productor de Kafka
+    selected_country = request.form.get('country')  # Obtener el país seleccionado por el usuario
+    start_second_producer(selected_country)  # Iniciar el segundo productor de Kafka
     return 'Generating data...'
 
-devices = []  # Lista global de dispositivos
-device_id_counter = 1  # Inicializar un contador para generar IDs únicos
+@app.route('/data')
+def data():
+    # Obtener todos los datos almacenados en MongoDB
+    stored_data = list(mongo_locations_collection.find())
+    return render_template('data.html', data=stored_data)
+
 
 def handle_devices(data):
     location = data.get('location')
@@ -104,22 +114,25 @@ def handle_devices(data):
             'devices': []
         }
 
-    devices = devices_by_location[location]['devices']
-    if data not in devices: # Evitar duplicados
+    devices = devices_by_location[location]['devices']  # Obtener los dispositivos de la ubicación
+    if data not in devices:  # Evitar duplicados
         devices.append(data)
         # Guardar datos del dispositivo en la colección locations
         mongo_locations_collection.insert_one(data)
 
-    socketio.emit('devices', devices_by_location[location]) # Emitir los dispositivos de la ubicación
+    socketio.emit('devices', devices_by_location[location])  # Emitir los dispositivos de la ubicación
+
 
 @socketio.on('connect')
 def handle_connect():
     print('Cliente conectado')
     emit('status', {'data': 'Conexión establecida'})
 
+
 @socketio.on('disconnect')
 def handle_disconnect():
     print('Cliente desconectado')
+
 
 def start_producer():
     if not is_producer_running():
@@ -130,12 +143,14 @@ def start_producer():
         print("El productor ya está en ejecución.")
 
 def start_second_producer(country):
-    if not is_second_producer_running():
+    selected_country = request.form.get('country')
+    if not is_second_producer_running() and selected_country is not None:
         script_path = 'C:\\Users\\Usuario\\PycharmProjects\\pythonProject2\\Producer (OpenAQ)\\kafka-producer-loc.py'
         subprocess.Popen(['python', script_path, country])
         print("Segundo productor de Kafka iniciado.")
     else:
         print("El segundo productor ya está en ejecución.")
+
 
 def is_producer_running():
     # Lógica para verificar si el productor ya está en ejecución
@@ -143,11 +158,13 @@ def is_producer_running():
     # Puedes usar bibliotecas como psutil o consultar el sistema operativo
     return False  # Devuelve True si el productor está en ejecución, False de lo contrario
 
+
 def is_second_producer_running():
     # Lógica para verificar si el segundo productor ya está en ejecución
     # Puedes ajustar esta lógica según tus necesidades
     # Puedes usar bibliotecas como psutil o consultar el sistema operativo
     return False  # Devuelve True si el segundo productor está en ejecución, False de lo contrario
+
 
 if __name__ == '__main__':
     socketio.start_background_task(target=background_thread)

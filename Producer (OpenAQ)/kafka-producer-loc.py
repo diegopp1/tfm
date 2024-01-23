@@ -23,7 +23,7 @@ kafka_topic = 'locations'
 openaq_api_key = '83fcfc1c531d71a7290846eb31fd75b91a3f1cd85653f2fef21f5140e2371746'
 
 # URL base de la API de OpenAQ para obtener datos de calidad del aire por país
-openaq_data_url = "https://api.openaq.org/v2/locations?limit=100&page=1&offset=0&sort=desc&parameter=&radius=1000&country={}&order_by=lastUpdated&dump_raw=false"
+openaq_data_url = "https://api.openaq.org/v2/locations?limit=10&page=1&offset=0&sort=desc&parameter=&radius=1000&country={}&order_by=lastUpdated&dump_raw=false"
 
 def fetch_openaq_data(country):
     try:
@@ -48,9 +48,8 @@ def delivery_report(err, msg):
 
 # Función para obtener el país seleccionado (puedes personalizar esto según tu aplicación)
 def get_selected_country():
-    # Aquí puedes implementar la lógica para obtener el país seleccionado, ya sea desde una variable, base de datos, etc.
     # Por ahora, se devuelve 'US' como valor predeterminado.
-    return 'US'
+    return selected_country or 'US'
 
 # Bucle principal para enviar datos de OpenAQ al tema de Kafka
 while True:
@@ -58,7 +57,7 @@ while True:
         selected_country = get_selected_country()
 
         openaq_data = fetch_openaq_data(selected_country)
-
+        print(openaq_data)
         if openaq_data is not None:
             # Enviar datos al tema de Kafka
             for data_entry in openaq_data:
@@ -73,7 +72,7 @@ while True:
             logger.warning("No se pudieron obtener datos de calidad del aire. Reintentando en 60 segundos.")
 
         # Esperar diez minutos antes de obtener nuevos datos
-        time.sleep(600)
+        time.sleep(10)
     except Exception as e:
         logger.error(f"Error al obtener/enviar datos: {e}")
 

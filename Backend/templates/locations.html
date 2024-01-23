@@ -31,8 +31,19 @@
                 <form method="post" action="{{ url_for('generate_data') }}">
                     <div class="field is-grouped">
                         <p class="control">
-                            <label for="countryInput" class="label">Country:</label>
-                            <input class="input" type="text" placeholder="Country Code" id="countryInput" name="country" required>
+                            <label for="countrySelect" class="label">Country:</label>
+                            <div class="select">
+                                <select id="countrySelect" name="country" required>
+                                    <option value="US">United States</option>
+                                    <option value="CA">Canada</option>
+                                    <option value="AR">Argentina</option>
+                                    <option value="CL">Chile</option>
+                                    <option value="FR">France</option>
+                                    <option value="DE">Germany</option>
+                                    <option value="IT">Italy</option>
+                                    <!-- Agregar más opciones según sea necesario -->
+                                </select>
+                            </div>
                         </p>
                         <p class="control">
                             <button type="submit" class="button is-success">Generate Data</button>
