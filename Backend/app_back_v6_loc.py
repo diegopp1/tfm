@@ -166,7 +166,7 @@ def start_producer():
 
 def start_second_producer():
     if not is_second_producer_running():
-        script_path = 'C:\\Users\\Usuario\\PycharmProjects\\pythonProject2\\Producer (OpenAQ)\\kafka-second-producerv3.py'
+        script_path = 'C:\\Users\\Usuario\\PycharmProjects\\pythonProject2\\Producer (OpenAQ)\\kafka-producer-loc.py'
         subprocess.Popen(['python', script_path])
         print("Segundo productor de Kafka iniciado.")
     else:
