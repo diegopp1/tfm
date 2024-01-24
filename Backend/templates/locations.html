@@ -28,44 +28,46 @@
         <div class="container">
             <section id="generate-data" class="mt-5">
                 <h3 class="title is-3">Generate OpenAQ Data</h3>
-                <form id="generateForm" class="field is-grouped">
-                    <p class="control">
-                        <label for="countrySelect" class="label">Country:</label>
-                        <div class="select">
-                            <select id="countrySelect" name="country" required>
-                                <option value="US">United States</option>
-                                <option value="CA">Canada</option>
-                                <option value="AR">Argentina</option>
-                                <option value="CL">Chile</option>
-                                <option value="FR">France</option>
-                                <option value="DE">Germany</option>
-                                <option value="IT">Italy</option>
-                                <!-- Agregar más opciones según sea necesario -->
-                            </select>
-                        </div>
-                    </p>
-                    <p class="control">
-                        <button type="button" id="generateBtn" class="button is-success">Generate Data</button>
-                    </p>
+                <form id="generateForm" method="post" action="{{ url_for('generate_data') }}">
+                    <div class="field is-grouped">
+                        <p class="control">
+                            <label for="countrySelect" class="label">Country:</label>
+                            <div class="select">
+                                <select id="countrySelect" name="country" required>
+                                    <option value="US" {% if country == 'US' %}selected{% endif %}>United States</option>
+                                    <option value="CA" {% if country == 'CA' %}selected{% endif %}>Canada</option>
+                                    <option value="AR" {% if country == 'AR' %}selected{% endif %}>Argentina</option>
+                                    <option value="CL" {% if country == 'CL' %}selected{% endif %}>Chile</option>
+                                    <option value="FR" {% if country == 'FR' %}selected{% endif %}>France</option>
+                                    <option value="DE" {% if country == 'DE' %}selected{% endif %}>Germany</option>
+                                    <option value="IT" {% if country == 'IT' %}selected{% endif %}>Italy</option>
+                                    <!-- Agregar más opciones según sea necesario -->
+                                </select>
+                            </div>
+                        </p>
+                        <p class="control">
+                            <button type="submit" class="button is-success">Generate Data</button>
+                        </p>
+                    </div>
                 </form>
             </section>
         </div>
     </div>
+
+    <div id="generationStatus"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const socket = io.connect('http://' + document.domain + ':' + location.port);
 
-            const generateForm = document.getElementById('generateForm');
-            generateForm.addEventListener('submit', function (event) {
-                event.preventDefault(); // Evitar que el formulario se envíe automáticamente
-                const selectedCountry = document.getElementById('countrySelect').value;
-                socket.emit('generate_data', { country: selectedCountry });
+            // Agregar lógica para manejar el evento de confirmación de generación
+            socket.on('generation_started', function (data) {
+                const generationStatus = document.getElementById('generationStatus');
+                generationStatus.textContent = `Generating data for ${data.country}...`;
             });
         });
     </script>
-
 </body>
 
 </html>
