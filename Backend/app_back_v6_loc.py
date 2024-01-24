@@ -48,6 +48,7 @@ except KafkaException as e:
 
 devices_by_location = {}
 
+
 def consume_message():
     try:
         msg = consumer.poll(1.0)
@@ -72,6 +73,7 @@ def background_thread():
             handle_devices(data)
             socketio.sleep(1)
 
+
 @app.route('/')
 def index():
     global producer_running
@@ -79,6 +81,8 @@ def index():
         start_producer()
         producer_running = True
     return render_template('index2.html')
+
+
 @app.route('/locations')
 def locations():
     global sec_producer_running
@@ -88,11 +92,13 @@ def locations():
         sec_producer_running = True
     return render_template('locations.html')
 
+
 @app.route('/generate', methods=['POST'])
 def generate_data():
     selected_country = request.form.get('country')  # Obtener el país seleccionado por el usuario
     start_second_producer(selected_country)  # Iniciar el segundo productor de Kafka
     return 'Generating data...'
+
 
 @app.route('/data')
 def data():
@@ -139,6 +145,7 @@ def start_producer():
         print("Productor de Kafka iniciado.")
     else:
         print("El productor ya está en ejecución.")
+
 
 def start_second_producer(country):
     selected_country = request.form.get('country')
