@@ -64,10 +64,10 @@
             // Agregar lógica para manejar el cambio en la selección del país
             const countrySelect = document.getElementById('countrySelect');
             countrySelect.addEventListener('change', function () {
-                const selectedCountry = countrySelect.value;
+                const selectedCountry = countrySelect.value; // Obtener el país seleccionado
                 // Enviar el país seleccionado al servidor (puedes usar Socket.IO o AJAX)
                 // Por simplicidad, puedes redirigir a una nueva URL con el país como parámetro de consulta
-                window.location.href = `/locations?country=${selectedCountry}`;
+                window.location.href = `/locations?country=${selectedCountry}`; // Redirigir a la nueva URL
             });
         });
     </script>
