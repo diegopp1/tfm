@@ -53,8 +53,9 @@ def consume_message():
     try:
         msg = consumer.poll(1.0)
         if msg is not None and not msg.error():
+            topic = msg.topic()
             data = json.loads(msg.value().decode('utf-8'))
-            logger.info("Datos recibidos: {}".format(data))
+            logger.info("Datos recibidos del tema {}: {}".format(topic, data))
             return data
     except Exception as e:
         logger.error(f"Error al procesar mensaje de Kafka: {e}")
@@ -87,6 +88,12 @@ def generate_data():
     global selected_country
     selected_country = request.form.get('country')
     start_second_producer(selected_country)
+    openaq_data_loc = consume_message()
+    if openaq_data_loc:
+        for entry in openaq_data_loc:
+            if '_id' in entry:
+                entry['_id'] = str(entry['_id'])
+        socketio.emit('air_quality_data', openaq_data_loc) # Emitir datos de calidad del aire
     return 'Generating data...'
 
 @app.route('/data')
@@ -108,7 +115,7 @@ def handle_devices(data):
     devices = devices_by_location[location]['devices']
     if data not in devices:
         devices.append(data)
-        mongo_locations_collection.insert_one(data)
+        mongo_air_quality_collection.insert_one(data)
 
     socketio.emit('devices', devices_by_location[location])
 
