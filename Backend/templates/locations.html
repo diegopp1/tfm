@@ -61,6 +61,14 @@
 
             // Agregar lógica para manejar los datos recibidos en tiempo real (si es necesario)
 
+            // Agregar lógica para manejar el cambio en la selección del país
+            const countrySelect = document.getElementById('countrySelect');
+            countrySelect.addEventListener('change', function () {
+                const selectedCountry = countrySelect.value;
+                // Enviar el país seleccionado al servidor (puedes usar Socket.IO o AJAX)
+                // Por simplicidad, puedes redirigir a una nueva URL con el país como parámetro de consulta
+                window.location.href = `/locations?country=${selectedCountry}`;
+            });
         });
     </script>
 
