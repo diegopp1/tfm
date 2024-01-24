@@ -53,7 +53,7 @@ def delivery_report(err, msg):
 while True:
     try:
         openaq_data = fetch_openaq_data(selected_country)
-        print(openaq_data)
+
         if openaq_data is not None:
             # Enviar datos al tema de Kafka
             for data_entry in openaq_data:
@@ -63,7 +63,7 @@ while True:
                     value=json.dumps(data_entry).encode('utf-8'),
                     callback=delivery_report
                 )
-                print(f"Enviando datos de calidad del aire a Kafka para {selected_country}")
+            print(f"Enviando datos de calidad del aire a Kafka para {selected_country}")
         else:
             logger.warning("No se pudieron obtener datos de calidad del aire. Reintentando en 60 segundos.")
         time.sleep(600)
