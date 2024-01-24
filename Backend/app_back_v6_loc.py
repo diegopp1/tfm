@@ -94,7 +94,7 @@ def generate_data():
         for entry in openaq_data_loc:
             if '_id' in entry:
                 entry['_id'] = str(entry['_id'])
-        mongo_locations_collection.insert_one() # Insertar datos de calidad del aire en MongoDB
+        handle_devices(entry)
         print("Datos de calidad del aire insertados en MongoDB.")
     return 'Generating data...'
 
