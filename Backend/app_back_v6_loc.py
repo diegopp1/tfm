@@ -147,11 +147,10 @@ def start_producer():
         print("El productor ya está en ejecución.")
 
 
-def start_second_producer(country):
-    selected_country = request.form.get('country')
-    if not is_second_producer_running() and selected_country is not None:
+def start_second_producer():
+    if not is_second_producer_running():
         script_path = 'C:\\Users\\Usuario\\PycharmProjects\\pythonProject2\\Producer (OpenAQ)\\kafka-producer-loc.py'
-        subprocess.Popen(['python', script_path, country])
+        subprocess.Popen(['python', script_path])
         print("Segundo productor de Kafka iniciado.")
     else:
         print("El segundo productor ya está en ejecución.")
