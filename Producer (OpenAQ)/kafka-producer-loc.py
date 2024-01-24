@@ -67,8 +67,6 @@ while True:
                 print(f"Enviando datos de calidad del aire a Kafka para {selected_country}")
         else:
             logger.warning("No se pudieron obtener datos de calidad del aire. Reintentando en 60 segundos.")
-
-        # Esperar diez minutos antes de obtener nuevos datos
         time.sleep(600)
     except Exception as e:
         logger.error(f"Error al obtener/enviar datos: {e}")
