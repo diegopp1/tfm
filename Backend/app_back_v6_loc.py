@@ -37,7 +37,7 @@ mongo_locations_collection = mongo_db['locations']
 consumer = Consumer({
     'bootstrap.servers': 'localhost:9092',
     'group.id': 'my_consumer_group',
-    'auto.offset.reset': 'earliest'
+    'auto.offset.reset': 'latest'
 })
 
 try:
@@ -118,16 +118,40 @@ def handle_devices(data):
             }
 
         devices = devices_by_location[location]['devices']
+        filtered_devices = []
+
+        for device in devices:
+            filtered_device = {
+                'id': device.get('id'),
+                'name': device.get('name'),
+                'country': device.get('country'),
+                'parameters': [
+                    param for param in device.get('parameters', [])
+                    if param.get('id') in [1, 2]  # Filtrar por ID 1 y 2 (pm10 y pm25)
+                ]
+            }
+            filtered_devices.append(filtered_device)
+
         if data not in devices:
             devices.append(data)
             mongo_locations_collection.insert_one(data)
-        socketio.emit('devices', devices_by_location[location])
+        socketio.emit('devices', filtered_devices)
 
     elif topic == 'datos':
         # Manejar los datos de 'datos'
-        mongo_air_quality_collection.insert_one(data)
-        socketio.emit('air_quality_data', data)
+        data['_id'] = str(data.get('_id', ''))  # Convertir el _id a string
+        filtered_data = {
+            'id': data.get('id'),
+            'name': data.get('name'),
+            'country': data.get('country'),
+            'parameters': [
+                param for param in data.get('parameters', [])
+                if param.get('id') in [1, 2]  # Filtrar por ID 1 y 2 (pm10 y pm25)
+            ]
+        }
 
+        mongo_air_quality_collection.insert_one(filtered_data)
+        socketio.emit('air_quality_data', json.dumps(filtered_data))
 
 @socketio.on('connect')
 def handle_connect():
