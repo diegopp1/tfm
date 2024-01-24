@@ -28,15 +28,18 @@
             <section id="stored-data" class="mt-5">
                 <h3 class="title is-3">Stored Data</h3>
                 <ul id="storedDataList">
-                    {% for entry in data %}
+                    {% for entry in data if data is iterable %}
                         <li>
                             <strong>Location:</strong> {{ entry.location }}<br>
                             <strong>Country:</strong> {{ entry.country }}<br>
                             <strong>Measurements:</strong><br>
                             <ul>
-                                {% for measurement in entry.measurements %}
+                                {%if entry.measurements is iterable %}
+                                    {% for measurement in entry.measurements %}
+                                        <li>{{ measurement.parameter }}: {{ measurement.value }} {{ measurement.unit }}</li>
+                                    {% endfor %}
                                     <li>{{ measurement.parameter }}: {{ measurement.value }} {{ measurement.unit }}</li>
-                                {% endfor %}
+                                {% endif %}
                             </ul>
                             <strong>Last Updated:</strong> {{ entry.lastUpdated }}<br>
                         </li>
@@ -61,3 +64,4 @@
 </body>
 
 </html>
+
