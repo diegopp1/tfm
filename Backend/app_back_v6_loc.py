@@ -85,18 +85,12 @@ def index():
 
 @app.route('/locations')
 def locations():
-    global sec_producer_running
-    selected_country = request.args.get('country')  # Cambiado de request.form a request.args
-    if not sec_producer_running:
-        start_second_producer(selected_country)
-        sec_producer_running = True
+    country = request.args.get('country')
     return render_template('locations.html')
-
 
 @app.route('/generate', methods=['POST'])
 def generate_data():
-    selected_country = request.form.get('country')  # Obtener el país seleccionado por el usuario
-    start_second_producer(selected_country)  # Iniciar el segundo productor de Kafka
+    start_second_producer()  # Iniciar el segundo productor de Kafka
     return 'Generating data...'
 
 

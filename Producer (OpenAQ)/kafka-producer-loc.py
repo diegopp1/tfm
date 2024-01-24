@@ -22,7 +22,6 @@ kafka_topic = 'locations'
 # API Key de OpenAQ (reemplaza 'your-openaq-api-key' con tu clave real)
 openaq_api_key = '83fcfc1c531d71a7290846eb31fd75b91a3f1cd85653f2fef21f5140e2371746'
 
-
 def fetch_openaq_data(country):
     openaq_data_url = f"https://api.openaq.org/v2/locations?limit=100&page=1&offset=0&sort=desc&radius=1000&country={selected_country}&order_by=lastUpdated&dump_raw=false"
     try:

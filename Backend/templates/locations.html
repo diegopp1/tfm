@@ -28,27 +28,25 @@
         <div class="container">
             <section id="generate-data" class="mt-5">
                 <h3 class="title is-3">Generate OpenAQ Data</h3>
-                <form method="post" action="{{ url_for('generate_data') }}">
-                    <div class="field is-grouped">
-                        <p class="control">
-                            <label for="countrySelect" class="label">Country:</label>
-                            <div class="select">
-                                <select id="countrySelect" name="country" required>
-                                    <option value="US">United States</option>
-                                    <option value="CA">Canada</option>
-                                    <option value="AR">Argentina</option>
-                                    <option value="CL">Chile</option>
-                                    <option value="FR">France</option>
-                                    <option value="DE">Germany</option>
-                                    <option value="IT">Italy</option>
-                                    <!-- Agregar más opciones según sea necesario -->
-                                </select>
-                            </div>
-                        </p>
-                        <p class="control">
-                            <button type="submit" class="button is-success">Generate Data</button>
-                        </p>
-                    </div>
+                <form id="generateForm" class="field is-grouped">
+                    <p class="control">
+                        <label for="countrySelect" class="label">Country:</label>
+                        <div class="select">
+                            <select id="countrySelect" name="country" required>
+                                <option value="US">United States</option>
+                                <option value="CA">Canada</option>
+                                <option value="AR">Argentina</option>
+                                <option value="CL">Chile</option>
+                                <option value="FR">France</option>
+                                <option value="DE">Germany</option>
+                                <option value="IT">Italy</option>
+                                <!-- Agregar más opciones según sea necesario -->
+                            </select>
+                        </div>
+                    </p>
+                    <p class="control">
+                        <button type="button" id="generateBtn" class="button is-success">Generate Data</button>
+                    </p>
                 </form>
             </section>
         </div>
@@ -59,15 +57,11 @@
         document.addEventListener('DOMContentLoaded', function () {
             const socket = io.connect('http://' + document.domain + ':' + location.port);
 
-            // Agregar lógica para manejar los datos recibidos en tiempo real (si es necesario)
-
-            // Agregar lógica para manejar el cambio en la selección del país
-            const countrySelect = document.getElementById('countrySelect');
-            countrySelect.addEventListener('change', function () {
-                const selectedCountry = countrySelect.value; // Obtener el país seleccionado
-                // Enviar el país seleccionado al servidor (puedes usar Socket.IO o AJAX)
-                // Por simplicidad, puedes redirigir a una nueva URL con el país como parámetro de consulta
-                window.location.href = `/locations?country=${selectedCountry}`; // Redirigir a la nueva URL
+            const generateForm = document.getElementById('generateForm');
+            generateForm.addEventListener('submit', function (event) {
+                event.preventDefault(); // Evitar que el formulario se envíe automáticamente
+                const selectedCountry = document.getElementById('countrySelect').value;
+                socket.emit('generate_data', { country: selectedCountry });
             });
         });
     </script>
@@ -75,3 +69,4 @@
 </body>
 
 </html>
+
