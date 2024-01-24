@@ -27,7 +27,7 @@ openaq_api_key = '83fcfc1c531d71a7290846eb31fd75b91a3f1cd85653f2fef21f5140e23717
 selected_country = sys.argv[1] if len(sys.argv) > 1 else 'US'
 
 def fetch_openaq_data(country):
-    openaq_data_url = f"https://api.openaq.org/v2/locations?limit=100&page=1&offset=0&sort=desc&radius=1000&country={country}&order_by=lastUpdated&dump_raw=false"
+    openaq_data_url = f"https://api.openaq.org/v2/locations?limit=10&page=1&offset=0&sort=desc&radius=1000&country={country}&order_by=lastUpdated&dump_raw=false"
     try:
         response = requests.get(openaq_data_url, headers={"X-API-Key": openaq_api_key})
 

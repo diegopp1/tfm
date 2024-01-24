@@ -56,6 +56,7 @@ def consume_message():
             topic = msg.topic()
             data = json.loads(msg.value().decode('utf-8'))
             logger.info("Datos recibidos del tema {}: {}".format(topic, data))
+            data['_topic'] = topic  # Añadir el topic al diccionario
             return data
     except Exception as e:
         logger.error(f"Error al procesar mensaje de Kafka: {e}")
@@ -89,11 +90,12 @@ def generate_data():
     selected_country = request.form.get('country')
     start_second_producer(selected_country)
     openaq_data_loc = consume_message()
-    if openaq_data_loc:
+    if openaq_data_loc is not None:
         for entry in openaq_data_loc:
             if '_id' in entry:
                 entry['_id'] = str(entry['_id'])
-        socketio.emit('air_quality_data', openaq_data_loc) # Emitir datos de calidad del aire
+        mongo_locations_collection.insert_one() # Insertar datos de calidad del aire en MongoDB
+        print("Datos de calidad del aire insertados en MongoDB.")
     return 'Generating data...'
 
 @app.route('/data')
@@ -104,20 +106,28 @@ def data():
 def handle_devices(data):
     location = data.get('location')
     country = data.get('country')
+    topic = data.get('_topic')  # Obtener el topic
 
-    if location not in devices_by_location:
-        devices_by_location[location] = {
-            'location': location,
-            'country': country,
-            'devices': []
-        }
+    if topic == 'locations':
+        # Manejar los datos de 'locations'
+        if location not in devices_by_location:
+            devices_by_location[location] = {
+                'location': location,
+                'country': country,
+                'devices': []
+            }
 
-    devices = devices_by_location[location]['devices']
-    if data not in devices:
-        devices.append(data)
+        devices = devices_by_location[location]['devices']
+        if data not in devices:
+            devices.append(data)
+            mongo_locations_collection.insert_one(data)
+        socketio.emit('devices', devices_by_location[location])
+
+    elif topic == 'datos':
+        # Manejar los datos de 'datos'
         mongo_air_quality_collection.insert_one(data)
+        socketio.emit('air_quality_data', data)
 
-    socketio.emit('devices', devices_by_location[location])
 
 @socketio.on('connect')
 def handle_connect():
