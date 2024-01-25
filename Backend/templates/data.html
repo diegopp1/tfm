@@ -34,11 +34,10 @@
                             <strong>Country:</strong> {{ entry.country }}<br>
                             <strong>Measurements:</strong><br>
                             <ul>
-                                {%if entry.measurements is iterable %}
-                                    {% for measurement in entry.measurements %}
-                                        <li>{{ measurement.parameter }}: {{ measurement.value }} {{ measurement.unit }}</li>
+                                {% if entry.parameters is iterable %}
+                                    {% for parameter in entry.parameters %}
+                                        <li>{{ parameter.parameter }}: {{ parameter.lastValue }} {{ parameter.unit }}</li>
                                     {% endfor %}
-                                    <li>{{ measurement.parameter }}: {{ measurement.value }} {{ measurement.unit }}</li>
                                 {% endif %}
                             </ul>
                             <strong>Last Updated:</strong> {{ entry.lastUpdated }}<br>

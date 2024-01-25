@@ -62,6 +62,28 @@ def consume_message():
         logger.error(f"Error al procesar mensaje de Kafka: {e}")
     return None
 
+def generate_filtered_device(data):
+    return {
+        'id': data.get('id'),
+        'name': data.get('name'),
+        'country': data.get('country'),
+        'parameters': [
+            param for param in data.get('parameters', [])
+            if param.get('id') in [1, 2, 135]  # Filtrar por ID 1, 2 y 135
+        ]
+    }
+
+def generate_filtered_data(data):
+    return {
+        'id': data.get('id'),
+        'name': data.get('name'),
+        'country': data.get('country'),
+        'parameters': [
+            param for param in data.get('parameters', [])
+            if param.get('id') in [1, 2, 135]  # Filtrar por ID 1, 2 y 135
+        ]
+    }
+
 def background_thread():
     while True:
         data = consume_message()
@@ -89,6 +111,7 @@ def generate_data():
     global selected_country
     selected_country = request.form.get('country')
     start_second_producer(selected_country)
+    print ('Conectado')
     openaq_data_loc = consume_message()
     if openaq_data_loc is not None:
         for entry in openaq_data_loc:
@@ -100,58 +123,51 @@ def generate_data():
 
 @app.route('/data')
 def data():
-    stored_data = list(mongo_locations_collection.find())
-    return render_template('data.html', data=stored_data)
+    stored_data = list(mongo_air_quality_collection.find())
+    measurements = []
+
+    for data_entry in stored_data:
+        parameters = data_entry.get('parameters', [])
+        for parameter in parameters:
+            measurement = {
+                'parameter': parameter.get('parameter', ''),
+                'value': parameter.get('lastValue', ''),
+                'unit': parameter.get('unit', '')
+            }
+            measurements.append(measurement)
+
+    return render_template('data.html', measurements=measurements)
+
 
 def handle_devices(data):
-    location = data.get('location')
+    id = data.get('id')
     country = data.get('country')
     topic = data.get('_topic')  # Obtener el topic
 
     if topic == 'locations':
         # Manejar los datos de 'locations'
-        if location not in devices_by_location:
-            devices_by_location[location] = {
-                'location': location,
+        if id not in devices_by_location:
+            devices_by_location[id] = {
+                'id': id,
                 'country': country,
                 'devices': []
             }
 
-        devices = devices_by_location[location]['devices']
-        filtered_devices = []
-
-        for device in devices:
-            filtered_device = {
-                'id': device.get('id'),
-                'name': device.get('name'),
-                'country': device.get('country'),
-                'parameters': [
-                    param for param in device.get('parameters', [])
-                    if param.get('id') in [1, 2]  # Filtrar por ID 1 y 2 (pm10 y pm25)
-                ]
-            }
-            filtered_devices.append(filtered_device)
-
-        if data not in devices:
-            devices.append(data)
-            mongo_locations_collection.insert_one(data)
-        socketio.emit('devices', filtered_devices)
+        devices = devices_by_location[id]['devices']
+        filtered_device = generate_filtered_device(data)
+        devices.append(filtered_device)
+        mongo_locations_collection.insert_one(filtered_device)
+        socketio.emit('devices', [filtered_device])
 
     elif topic == 'datos':
         # Manejar los datos de 'datos'
         data['_id'] = str(data.get('_id', ''))  # Convertir el _id a string
-        filtered_data = {
-            'id': data.get('id'),
-            'name': data.get('name'),
-            'country': data.get('country'),
-            'parameters': [
-                param for param in data.get('parameters', [])
-                if param.get('id') in [1, 2]  # Filtrar por ID 1 y 2 (pm10 y pm25)
-            ]
-        }
+        filtered_data = generate_filtered_data(data)
 
-        mongo_air_quality_collection.insert_one(filtered_data)
-        socketio.emit('air_quality_data', json.dumps(filtered_data))
+        # Solo insertar y emitir si hay parámetros después del filtrado
+        if filtered_data['parameters']:
+            mongo_air_quality_collection.insert_one(filtered_data)
+            socketio.emit('air_quality_data', json.dumps(filtered_data))
 
 @socketio.on('connect')
 def handle_connect():
