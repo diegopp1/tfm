@@ -123,22 +123,8 @@ def generate_data():
 
 @app.route('/data')
 def data():
-    stored_data = list(mongo_air_quality_collection.find())
-    measurements = []
-
-    for data_entry in stored_data:
-        parameters = data_entry.get('parameters', [])
-        for parameter in parameters:
-            measurement = {
-                'parameter': parameter.get('parameter', ''),
-                'value': parameter.get('lastValue', ''),
-                'unit': parameter.get('unit', '')
-            }
-            measurements.append(measurement)
-
-    return render_template('data.html', measurements=measurements)
-
-
+    stored_data = list(mongo_locations_collection.find())
+    return render_template('data.html', stored_data=stored_data)
 def handle_devices(data):
     id = data.get('id')
     country = data.get('country')
