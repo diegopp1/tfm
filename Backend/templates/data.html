@@ -28,13 +28,13 @@
             <section id="stored-data" class="mt-5">
                 <h3 class="title is-3">Stored Data</h3>
                 <ul id="storedDataList">
-                    {% for entry in data if data is iterable %}
+                    {% for entry in stored_data %}
                         <li>
-                            <strong>Location:</strong> {{ entry.location }}<br>
+                            <strong>Location:</strong> {{ entry.name }}<br>
                             <strong>Country:</strong> {{ entry.country }}<br>
                             <strong>Measurements:</strong><br>
                             <ul>
-                                {% if entry.parameters is iterable %}
+                                {% if entry.parameters %}
                                     {% for parameter in entry.parameters %}
                                         <li>{{ parameter.parameter }}: {{ parameter.lastValue }} {{ parameter.unit }}</li>
                                     {% endfor %}
