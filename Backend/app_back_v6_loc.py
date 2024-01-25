@@ -130,37 +130,34 @@ def data():
     return render_template('data.html', stored_data=stored_data)
 
 def handle_devices(data):
-    if isinstance(data, dict):
-        id = data.get('id')
-        country = data.get('country')
-        topic = data.get('_topic')  # Obtener el topic
+    id = data.get('id')
+    country = data.get('country')
+    topic = data.get('_topic')  # Obtener el topic
 
-        if topic == 'locations':
-            # Manejar los datos de 'locations'
-            if id not in devices_by_location:
-                devices_by_location[id] = {
-                    'id': id,
-                    'country': country,
-                    'devices': []
-                }
+    if topic == 'locations':
+        # Manejar los datos de 'locations'
+        if id not in devices_by_location:
+            devices_by_location[id] = {
+                'id': id,
+                'country': country,
+                'devices': []
+            }
 
-            devices = devices_by_location[id]['devices']
-            filtered_device = generate_filtered_device(data)
-            devices.append(filtered_device)
-            mongo_locations_collection.insert_one(filtered_device)
-            socketio.emit('devices', [filtered_device])
+        devices = devices_by_location[id]['devices']
+        filtered_device = generate_filtered_device(data)
+        devices.append(filtered_device)
+        mongo_locations_collection.insert_one(filtered_device)
+        socketio.emit('devices', [filtered_device])
 
-        elif topic == 'datos':
-            # Manejar los datos de 'datos'
-            data['_id'] = str(data.get('_id', ''))  # Convertir el _id a string
-            filtered_data = generate_filtered_data(data)
+    elif topic == 'datos':
+        # Manejar los datos de 'datos'
+        data['_id'] = str(data.get('_id', ''))  # Convertir el _id a string
+        filtered_data = generate_filtered_data(data)
 
-            # Solo insertar y emitir si hay parámetros después del filtrado
-            if filtered_data['parameters']:
-                mongo_air_quality_collection.insert_one(filtered_data)
-                socketio.emit('air_quality_data', json.dumps(filtered_data))
-    else:
-        logger.warning("Datos no válidos recibidos: {}".format(data))
+        # Solo insertar y emitir si hay parámetros después del filtrado
+        if filtered_data['parameters']:
+            mongo_air_quality_collection.insert_one(filtered_data)
+            socketio.emit('air_quality_data', json.dumps(filtered_data))
 
 @socketio.on('connect')
 def handle_connect():
