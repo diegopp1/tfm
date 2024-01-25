@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit
-from confluent_kafka import Consumer, KafkaException, Producer
+from confluent_kafka import Consumer, KafkaException
 from pymongo.mongo_client import MongoClient
 import json
 import logging
@@ -55,9 +55,12 @@ def consume_message():
         if msg is not None and not msg.error():
             topic = msg.topic()
             data = json.loads(msg.value().decode('utf-8'))
-            logger.info("Datos recibidos del tema {}: {}".format(topic, data))
-            data['_topic'] = topic  # Añadir el topic al diccionario
-            return data
+            if isinstance(data, dict):
+                logger.info("Datos recibidos del tema {}: {}".format(topic, data))
+                data['_topic'] = topic  # Añadir el topic al diccionario
+                return data
+            else:
+                logger.warning("Datos no válidos recibidos del tema {}: {}".format(topic, data))
     except Exception as e:
         logger.error(f"Error al procesar mensaje de Kafka: {e}")
     return None
@@ -125,35 +128,39 @@ def generate_data():
 def data():
     stored_data = list(mongo_locations_collection.find())
     return render_template('data.html', stored_data=stored_data)
+
 def handle_devices(data):
-    id = data.get('id')
-    country = data.get('country')
-    topic = data.get('_topic')  # Obtener el topic
+    if isinstance(data, dict):
+        id = data.get('id')
+        country = data.get('country')
+        topic = data.get('_topic')  # Obtener el topic
 
-    if topic == 'locations':
-        # Manejar los datos de 'locations'
-        if id not in devices_by_location:
-            devices_by_location[id] = {
-                'id': id,
-                'country': country,
-                'devices': []
-            }
+        if topic == 'locations':
+            # Manejar los datos de 'locations'
+            if id not in devices_by_location:
+                devices_by_location[id] = {
+                    'id': id,
+                    'country': country,
+                    'devices': []
+                }
 
-        devices = devices_by_location[id]['devices']
-        filtered_device = generate_filtered_device(data)
-        devices.append(filtered_device)
-        mongo_locations_collection.insert_one(filtered_device)
-        socketio.emit('devices', [filtered_device])
+            devices = devices_by_location[id]['devices']
+            filtered_device = generate_filtered_device(data)
+            devices.append(filtered_device)
+            mongo_locations_collection.insert_one(filtered_device)
+            socketio.emit('devices', [filtered_device])
 
-    elif topic == 'datos':
-        # Manejar los datos de 'datos'
-        data['_id'] = str(data.get('_id', ''))  # Convertir el _id a string
-        filtered_data = generate_filtered_data(data)
+        elif topic == 'datos':
+            # Manejar los datos de 'datos'
+            data['_id'] = str(data.get('_id', ''))  # Convertir el _id a string
+            filtered_data = generate_filtered_data(data)
 
-        # Solo insertar y emitir si hay parámetros después del filtrado
-        if filtered_data['parameters']:
-            mongo_air_quality_collection.insert_one(filtered_data)
-            socketio.emit('air_quality_data', json.dumps(filtered_data))
+            # Solo insertar y emitir si hay parámetros después del filtrado
+            if filtered_data['parameters']:
+                mongo_air_quality_collection.insert_one(filtered_data)
+                socketio.emit('air_quality_data', json.dumps(filtered_data))
+    else:
+        logger.warning("Datos no válidos recibidos: {}".format(data))
 
 @socketio.on('connect')
 def handle_connect():
