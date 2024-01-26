@@ -114,8 +114,10 @@ def graph():
 
 @app.route('/get_graph_data', methods=['POST'])
 def get_graph_data():
-    x_axis_field = 'name'  # Fijo el eje X como 'name' ya que quieres relacionarlo con 'pm10'
-    y_axis_field = 'lastValue(pm10)'  # Fijo el eje Y como 'lastValue(pm10)'
+    x_axis_field = 'name'  # Fijo el eje X como 'name' ya que quieres relacionarlo con 'pm10', 'pm25', y 'um100'
+
+    # Lista de parámetros que quieres incluir en la gráfica
+    y_parameters = ['pm10', 'pm25', 'um100']
 
     # Ajustar la consulta para incluir solo 'name' y 'parameters' en la proyección
     data_cursor = mongo_locations_collection.find(
@@ -126,15 +128,14 @@ def get_graph_data():
     data_list = []
     for entry in data_cursor:
         try:
-            # Obtener el valor específico de 'lastValue(pm10)' para cada documento
-            pm10_value = next((param.get('lastValue', 0) for param in entry.get('parameters', []) if
-                              param.get('parameter') == 'pm10'), 0)
-
             # Crear un nuevo diccionario con los valores específicos
-            new_entry = {
-                x_axis_field: entry.get(x_axis_field),
-                y_axis_field: pm10_value
-            }
+            new_entry = {'name': entry.get('name')}
+
+            # Agregar los valores de cada parámetro al diccionario
+            for param in y_parameters:
+                value = next((p.get('lastValue', 0) for p in entry.get('parameters', []) if p.get('parameter') == param), 0)
+                new_entry[f'lastValue({param})'] = value
+
             data_list.append(new_entry)
         except KeyError as e:
             print(f"KeyError: {e} - Ignorando la entrada sin el valor correspondiente.")
