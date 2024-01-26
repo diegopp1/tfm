@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO, emit
 from confluent_kafka import Consumer, KafkaException
 from pymongo.mongo_client import MongoClient
@@ -6,6 +6,7 @@ import json
 import logging
 import subprocess
 from decouple import config
+import plotly.express as px
 
 app = Flask(__name__)
 socketio = SocketIO(app, threaded=True)
@@ -99,6 +100,39 @@ def background_thread():
             handle_devices(data)
             socketio.sleep(1)
 
+@app.route('/graph')
+def graph():
+    # Obtener los campos disponibles para los ejes X e Y
+    available_fields = get_available_fields()
+    return render_template('graph.html', available_fields=available_fields)
+
+@app.route('/get_graph_data', methods=['POST'])
+def get_graph_data():
+    x_axis_field = request.form.get('x-axis-field')
+    y_axis_field = request.form.get('y-axis-field')
+
+    # Lógica para obtener los datos necesarios desde tu base de datos (MongoDB en este caso)
+    # Utiliza los campos seleccionados (x_axis_field, y_axis_field) para obtener los datos correspondientes.
+
+    # Ejemplo (suponiendo que mongo_air_quality_collection es tu colección MongoDB):
+    data = mongo_air_quality_collection.find({}, {x_axis_field: 1, y_axis_field: 1, '_id': 0})
+    data_list = list(data)
+
+    return jsonify(data_list)
+
+def get_available_fields():
+    # Lógica para obtener los campos disponibles para los ejes X e Y
+    # Puedes adaptar esta función según la estructura de tu base de datos
+    # En este ejemplo, se asume que mongo_air_quality_collection contiene documentos con campos variados.
+
+    # Obtener un documento de la colección como ejemplo
+    example_document = mongo_air_quality_collection.find_one()
+
+    if example_document:
+        # Devolver los nombres de los campos como opciones
+        return list(example_document.keys())
+
+    return []
 @app.route('/')
 def index():
     global producer_running

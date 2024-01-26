@@ -13,6 +13,6 @@ uvicorn==0.25.0
 pymongo==4.6.1
 python-decouple==3.8
 plotly==5.18.0
-
+pandas==2.2.0
 
 
