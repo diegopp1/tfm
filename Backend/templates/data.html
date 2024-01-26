@@ -32,6 +32,7 @@
                         <li>
                             <strong>Location:</strong> {{ entry.name }}<br>
                             <strong>Country:</strong> {{ entry.country }}<br>
+                            <strong>Last Updated:</strong> {{ entry.lastUpdated }}<br>
                             <strong>Measurements:</strong><br>
                             <ul>
                                 {% if entry.parameters %}
@@ -40,9 +41,8 @@
                                     {% endfor %}
                                 {% endif %}
                             </ul>
-                            <strong>Last Updated:</strong> {{ entry.lastUpdated }}<br>
+                            <hr>
                         </li>
-                        <hr>
                     {% endfor %}
                 </ul>
             </section>

@@ -70,6 +70,7 @@ def generate_filtered_device(data):
         'id': data.get('id'),
         'name': data.get('name'),
         'country': data.get('country'),
+        'lastUpdated': data.get('lastUpdated'),
         'parameters': [
             param for param in data.get('parameters', [])
             if param.get('id') in [1, 2, 135]  # Filtrar por ID 1, 2 y 135
@@ -81,6 +82,7 @@ def generate_filtered_data(data):
         'id': data.get('id'),
         'name': data.get('name'),
         'country': data.get('country'),
+        'lastUpdated': data.get('lastUpdated'),
         'parameters': [
             param for param in data.get('parameters', [])
             if param.get('id') in [1, 2, 135]  # Filtrar por ID 1, 2 y 135

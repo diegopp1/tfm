@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT App - Graphs</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+    <!-- Incluye la biblioteca de Plotly -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body>
+    <section class="hero is-primary">
+        <div class="hero-body">
+            <div class="container">
+                <h1 class="title">
+                    IoT Data Dashboard - Graphs
+                </h1>
+                <h2 class="subtitle">
+                    Generate Custom Graphs
+                </h2>
+            </div>
+        </div>
+    </section>
+
+    <div class="section">
+        <div class="container">
+            <!-- Sección para seleccionar campos y mostrar la gráfica -->
+            <section id="graph-section" class="mt-5">
+                <h3 class="title is-3">Generate Graph</h3>
+                <!-- Formulario para seleccionar campos -->
+                <form id="graph-form">
+                    <div class="field">
+                        <label class="label">Select X-axis Field:</label>
+                        <div class="control">
+                            <!-- Dropdown para seleccionar el campo del eje X -->
+                            <div class="select">
+                                <select id="x-axis-field" name="x-axis-field">
+                                    <!-- Opciones generadas dinámicamente desde los campos disponibles -->
+                                    {% for field in available_fields %}
+                                        <option value="{{ field }}">{{ field }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Select Y-axis Field:</label>
+                        <div class="control">
+                            <!-- Dropdown para seleccionar el campo del eje Y -->
+                            <div class="select">
+                                <select id="y-axis-field" name="y-axis-field">
+                                    <!-- Opciones generadas dinámicamente desde los campos disponibles -->
+                                    {% for field in available_fields %}
+                                        <option value="{{ field }}">{{ field }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="control">
+                            <button class="button is-primary" type="submit">Generate Graph</button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Contenedor para mostrar la gráfica -->
+                <div id="graph-container" class="mt-5">
+                    <!-- Aquí se mostrará la gráfica generada -->
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const socket = io.connect('http://' + document.domain + ':' + location.port);
+            socket.on('connect', function () {
+                console.log('Conectado al servidor SocketIO!')
+            });
+
+            // Lógica adicional para manejar la generación de gráficos
+            const graphForm = document.getElementById('graph-form');
+            const graphContainer = document.getElementById('graph-container');
+
+            graphForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                const xAxisField = document.getElementById('x-axis-field').value;
+                const yAxisField = document.getElementById('y-axis-field').value;
+
+                // Lógica para solicitar datos al servidor con los campos seleccionados y generar la gráfica
+                fetch('/get_graph_data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'x-axis-field': xAxisField,
+                        'y-axis-field': yAxisField
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Utiliza Plotly para crear la gráfica interactiva
+                    const xValues = data.map(entry => entry[xAxisField]);
+                    const yValues = data.map(entry => entry[yAxisField]);
+
+                    const trace = {
+                        x: xValues,
+                        y: yValues,
+                        mode: 'markers',
+                        type: 'scatter'
+                    };
+
+                    const layout = {
+                        title: `Graph: ${yAxisField} vs ${xAxisField}`,
+                        xaxis: { title: xAxisField },
+                        yaxis: { title: yAxisField }
+                    };
+
+                    Plotly.newPlot(graphContainer, [trace], layout);
+                })
+                .catch(error => {
+                    console.error('Error fetching graph data:', error);
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
