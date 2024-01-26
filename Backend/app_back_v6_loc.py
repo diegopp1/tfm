@@ -111,7 +111,6 @@ def graph():
     available_fields = get_available_fields()
     return render_template('graph.html', available_fields=available_fields)
 
-
 @app.route('/get_graph_data', methods=['POST'])
 def get_graph_data():
     x_axis_field = 'name'  # Fijo el eje X como 'name' ya que quieres relacionarlo con 'pm10', 'pm25', y 'um100'
@@ -141,7 +140,6 @@ def get_graph_data():
             print(f"KeyError: {e} - Ignorando la entrada sin el valor correspondiente.")
 
     return jsonify(data_list)
-
 @app.route('/')
 def index():
     global producer_running
@@ -234,6 +232,49 @@ def is_producer_running():
 
 def is_second_producer_running():
     return False
+def calculate_average_by_country(collection):
+    # Obtener la lista de países únicos presentes en la colección
+    unique_countries = collection.distinct('country')
+
+    # Inicializar un diccionario para almacenar las medias por país
+    averages_by_country = {}
+
+    # Iterar sobre cada país y calcular la media para pm10, pm25 y um100
+    for country in unique_countries:
+        country_data = collection.find({'country': country}, {'parameters': 1, '_id': 0})
+
+        # Inicializar listas para almacenar valores de pm10, pm25 y um100 para el país actual
+        pm10_values = []
+        pm25_values = []
+        um100_values = []
+
+        # Iterar sobre los documentos del país actual
+        for entry in country_data:
+            for param in entry.get('parameters', []):
+                parameter = param.get('parameter')
+                last_value = param.get('lastValue', 0)
+
+                # Almacenar valores en las listas correspondientes
+                if parameter == 'pm10':
+                    pm10_values.append(last_value)
+                elif parameter == 'pm25':
+                    pm25_values.append(last_value)
+                elif parameter == 'um100':
+                    um100_values.append(last_value)
+
+        # Calcular la media para pm10, pm25 y um100
+        pm10_average = mean(pm10_values) if pm10_values else 0
+        pm25_average = mean(pm25_values) if pm25_values else 0
+        um100_average = mean(um100_values) if um100_values else 0
+
+        # Almacenar las medias en el diccionario
+        averages_by_country[country] = {
+            'pm10_average': pm10_average,
+            'pm25_average': pm25_average,
+            'um100_average': um100_average
+        }
+
+    return averages_by_country
 
 if __name__ == '__main__':
     socketio.start_background_task(target=background_thread)
