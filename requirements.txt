@@ -12,5 +12,7 @@ flask_socketio==5.3.6
 uvicorn==0.25.0
 pymongo==4.6.1
 python-decouple==3.8
+plotly==5.18.0
+
 
 
