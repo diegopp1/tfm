@@ -112,25 +112,25 @@ def get_graph_data():
     y_axis_field = request.form.get('y-axis-field')
 
     # Lógica para obtener los datos necesarios desde tu base de datos (MongoDB en este caso)
-    # Utiliza los campos seleccionados (x_axis_field, y_axis_field) para obtener los datos correspondientes.
 
     # Ejemplo (suponiendo que mongo_air_quality_collection es tu colección MongoDB):
-    data = mongo_air_quality_collection.find({}, {x_axis_field: 1, y_axis_field: 1, '_id': 0})
+    data = mongo_locations_collection.find({}, {x_axis_field: 1, y_axis_field: 1, 'parameters': 1, '_id': 0})
     data_list = list(data)
 
     return jsonify(data_list)
-
 def get_available_fields():
-    # Lógica para obtener los campos disponibles para los ejes X e Y
-    # Puedes adaptar esta función según la estructura de tu base de datos
-    # En este ejemplo, se asume que mongo_air_quality_collection contiene documentos con campos variados.
-
     # Obtener un documento de la colección como ejemplo
-    example_document = mongo_air_quality_collection.find_one()
+    example_document = mongo_locations_collection.find_one()
 
     if example_document:
-        # Devolver los nombres de los campos como opciones
-        return list(example_document.keys())
+        # Obtener los nombres de los campos
+        field_names = ['name', 'lastUpdated']  # Campos comunes
+        if 'parameters' in example_document:
+            # Si hay un campo 'parameters', agregar los campos dentro de ese campo
+            parameter_fields = example_document['parameters'][0].keys()
+            field_names.extend(parameter_fields)
+
+        return field_names
 
     return []
 @app.route('/')
