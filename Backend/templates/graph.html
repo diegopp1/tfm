@@ -37,10 +37,13 @@
                             <!-- Dropdown para seleccionar el campo del eje X -->
                             <div class="select">
                                 <select id="x-axis-field" name="x-axis-field">
-                                    <!-- Opciones generadas dinámicamente desde los campos disponibles -->
-                                    {% for field in available_fields %}
-                                        <option value="{{ field }}">{{ field }}</option>
-                                    {% endfor %}
+                                    <!-- Opciones específicas -->
+                                    <option value="name">Name</option>
+                                    <option value="lastUpdated">Last Updated</option>
+                                    <option value="country">Country</option>
+                                    <option value="lastValue(pm10)">Last Value (pm10)</option>
+                                    <option value="lastValue(pm25)">Last Value (pm25)</option>
+                                    <option value="lastValue(um100)">Last Value (um100)</option>
                                 </select>
                             </div>
                         </div>
@@ -52,10 +55,13 @@
                             <!-- Dropdown para seleccionar el campo del eje Y -->
                             <div class="select">
                                 <select id="y-axis-field" name="y-axis-field">
-                                    <!-- Opciones generadas dinámicamente desde los campos disponibles -->
-                                    {% for field in available_fields %}
-                                        <option value="{{ field }}">{{ field }}</option>
-                                    {% endfor %}
+                                    <!-- Opciones específicas -->
+                                    <option value="name">Name</option>
+                                    <option value="lastUpdated">Last Updated</option>
+                                    <option value="country">Country</option>
+                                    <option value="lastValue(pm10)">Last Value (pm10)</option>
+                                    <option value="lastValue(pm25)">Last Value (pm25)</option>
+                                    <option value="lastValue(um100)">Last Value (um100)</option>
                                 </select>
                             </div>
                         </div>
@@ -135,3 +141,4 @@
 </body>
 
 </html>
+

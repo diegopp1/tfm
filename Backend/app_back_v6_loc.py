@@ -7,6 +7,7 @@ import logging
 import subprocess
 from decouple import config
 import plotly.express as px
+from statistics import mean
 
 app = Flask(__name__)
 socketio = SocketIO(app, threaded=True)
@@ -100,39 +101,46 @@ def background_thread():
             handle_devices(data)
             socketio.sleep(1)
 
+def get_available_fields():
+    # Devolver las opciones específicas para los ejes X e Y
+    return ['name', 'lastUpdated', 'country', 'lastValue(pm10)', 'lastValue(pm25)', 'lastValue(um100)']
+
 @app.route('/graph')
 def graph():
     # Obtener los campos disponibles para los ejes X e Y
     available_fields = get_available_fields()
     return render_template('graph.html', available_fields=available_fields)
 
+
 @app.route('/get_graph_data', methods=['POST'])
 def get_graph_data():
-    x_axis_field = request.form.get('x-axis-field')
-    y_axis_field = request.form.get('y-axis-field')
+    x_axis_field = 'name'  # Fijo el eje X como 'name' ya que quieres relacionarlo con 'pm10'
+    y_axis_field = 'lastValue(pm10)'  # Fijo el eje Y como 'lastValue(pm10)'
 
-    # Lógica para obtener los datos necesarios desde tu base de datos (MongoDB en este caso)
+    # Ajustar la consulta para incluir solo 'name' y 'parameters' en la proyección
+    data_cursor = mongo_locations_collection.find(
+        {'name': {"$exists": True}, 'parameters': {"$exists": True}},
+        {'name': 1, 'parameters': 1, '_id': 0}
+    )
 
-    # Ejemplo (suponiendo que mongo_air_quality_collection es tu colección MongoDB):
-    data = mongo_locations_collection.find({}, {x_axis_field: 1, y_axis_field: 1, 'parameters': 1, '_id': 0})
-    data_list = list(data)
+    data_list = []
+    for entry in data_cursor:
+        try:
+            # Obtener el valor específico de 'lastValue(pm10)' para cada documento
+            pm10_value = next((param.get('lastValue', 0) for param in entry.get('parameters', []) if
+                              param.get('parameter') == 'pm10'), 0)
+
+            # Crear un nuevo diccionario con los valores específicos
+            new_entry = {
+                x_axis_field: entry.get(x_axis_field),
+                y_axis_field: pm10_value
+            }
+            data_list.append(new_entry)
+        except KeyError as e:
+            print(f"KeyError: {e} - Ignorando la entrada sin el valor correspondiente.")
 
     return jsonify(data_list)
-def get_available_fields():
-    # Obtener un documento de la colección como ejemplo
-    example_document = mongo_locations_collection.find_one()
 
-    if example_document:
-        # Obtener los nombres de los campos
-        field_names = ['name', 'lastUpdated']  # Campos comunes
-        if 'parameters' in example_document:
-            # Si hay un campo 'parameters', agregar los campos dentro de ese campo
-            parameter_fields = example_document['parameters'][0].keys()
-            field_names.extend(parameter_fields)
-
-        return field_names
-
-    return []
 @app.route('/')
 def index():
     global producer_running
@@ -229,3 +237,4 @@ def is_second_producer_running():
 if __name__ == '__main__':
     socketio.start_background_task(target=background_thread)
     socketio.run(app, debug=True, allow_unsafe_werkzeug=True, use_reloader=False)
+
