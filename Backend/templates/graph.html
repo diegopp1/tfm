@@ -111,20 +111,42 @@
                     const xValues = data.map(entry => entry[xAxisField]);
                     const yValues = data.map(entry => entry[yAxisField]);
 
-                    const trace = {
-                        x: xValues,
-                        y: yValues,
-                        mode: 'markers',
-                        type: 'scatter'
-                    };
+                    // Verificar si el eje X es 'country' y ajustar el formato de los datos
+                    if (xAxisField === 'country') {
+                        // Convertir a un formato compatible con Plotly para 'country'
+                        const uniqueCountries = [...new Set(xValues)];
+                        const groupedData = uniqueCountries.map(country => ({
+                            x: [country],
+                            y: [yValues[uniqueCountries.indexOf(country)]],
+                            type: 'bar',
+                            name: country
+                        }));
 
-                    const layout = {
-                        title: `Graph: ${yAxisField} vs ${xAxisField}`,
-                        xaxis: { title: xAxisField },
-                        yaxis: { title: yAxisField }
-                    };
+                        const layout = {
+                            title: `Graph: ${yAxisField} vs ${xAxisField}`,
+                            xaxis: { title: xAxisField },
+                            yaxis: { title: yAxisField },
+                            barmode: 'group'  // Agrupar las barras por país
+                        };
 
-                    Plotly.newPlot(graphContainer, [trace], layout);
+                        Plotly.newPlot(graphContainer, groupedData, layout);
+                    } else {
+                        // Formato original para 'name'
+                        const trace = {
+                            x: xValues,
+                            y: yValues,
+                            mode: 'markers',
+                            type: 'scatter'
+                        };
+
+                        const layout = {
+                            title: `Graph: ${yAxisField} vs ${xAxisField}`,
+                            xaxis: { title: xAxisField },
+                            yaxis: { title: yAxisField }
+                        };
+
+                        Plotly.newPlot(graphContainer, [trace], layout);
+                    }
                 })
                 .catch(error => {
                     console.error('Error fetching graph data:', error);
@@ -135,4 +157,3 @@
 </body>
 
 </html>
-

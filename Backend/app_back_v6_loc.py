@@ -113,33 +113,54 @@ def graph():
 
 @app.route('/get_graph_data', methods=['POST'])
 def get_graph_data():
-    x_axis_field = 'name'  # Fijo el eje X como 'name' ya que quieres relacionarlo con 'pm10', 'pm25', y 'um100'
+    x_axis_field = request.form.get('x-axis-field')
+    y_axis_field = request.form.get('y-axis-field')
 
     # Lista de parámetros que quieres incluir en la gráfica
     y_parameters = ['pm10', 'pm25', 'um100']
 
-    # Ajustar la consulta para incluir solo 'name' y 'parameters' en la proyección
-    data_cursor = mongo_locations_collection.find(
-        {'name': {"$exists": True}, 'parameters': {"$exists": True}},
-        {'name': 1, 'parameters': 1, '_id': 0}
-    )
+    # Si el eje X es 'country' y el eje Y es pm10, pm25 o um100
+    if x_axis_field == 'country' and y_axis_field in ['pm10', 'pm25', 'um100']:
+        averages_by_country = calculate_average_by_country(mongo_locations_collection)
 
-    data_list = []
-    for entry in data_cursor:
-        try:
-            # Crear un nuevo diccionario con los valores específicos
-            new_entry = {'name': entry.get('name')}
+        # Crear lista de diccionarios para cada país
+        data_list = []
+        for country, averages in averages_by_country.items():
+            entry = {'country': country}
+            entry[y_axis_field] = averages[y_axis_field + '_average']
+            data_list.append(entry)
 
-            # Agregar los valores de cada parámetro al diccionario
-            for param in y_parameters:
-                value = next((p.get('lastValue', 0) for p in entry.get('parameters', []) if p.get('parameter') == param), 0)
-                new_entry[f'lastValue({param})'] = value
+        return jsonify(data_list)
 
-            data_list.append(new_entry)
-        except KeyError as e:
-            print(f"KeyError: {e} - Ignorando la entrada sin el valor correspondiente.")
+    # Si el eje X es 'name', proceder con la lógica original
+    elif x_axis_field == 'name':
+        # Ajustar la consulta para incluir solo 'name' y 'parameters' en la proyección
+        data_cursor = mongo_locations_collection.find(
+            {'name': {"$exists": True}, 'parameters': {"$exists": True}},
+            {'name': 1, 'parameters': 1, '_id': 0}
+        )
 
-    return jsonify(data_list)
+        data_list = []
+        for entry in data_cursor:
+            try:
+                # Crear un nuevo diccionario con los valores específicos
+                new_entry = {'name': entry.get('name')}
+
+                # Agregar los valores de cada parámetro al diccionario
+                for param in y_parameters:
+                    value = next((p.get('lastValue', 0) for p in entry.get('parameters', []) if p.get('parameter') == param), 0)
+                    new_entry[f'lastValue({param})'] = value
+
+                data_list.append(new_entry)
+            except KeyError as e:
+                print(f"KeyError: {e} - Ignorando la entrada sin el valor correspondiente.")
+
+        return jsonify(data_list)
+
+    # Manejar otros casos o devolver un mensaje de error si es necesario
+    else:
+        return jsonify({'error': 'Invalid request. Please select valid axes.'})
+
 @app.route('/')
 def index():
     global producer_running
@@ -275,7 +296,6 @@ def calculate_average_by_country(collection):
         }
 
     return averages_by_country
-
 if __name__ == '__main__':
     socketio.start_background_task(target=background_thread)
     socketio.run(app, debug=True, allow_unsafe_werkzeug=True, use_reloader=False)
