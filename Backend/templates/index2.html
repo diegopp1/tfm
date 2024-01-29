@@ -4,86 +4,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IoT App - OpenAQ</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+    <title>My Air Quality App</title>
+    <style>
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        header {
+            background-color: #333;
+            padding: 1em;
+            text-align: center;
+            color: #fff;
+        }
+
+        nav {
+            background-color: #444;
+            padding: 0.5em;
+            text-align: center;
+        }
+
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            padding: 1em;
+            margin: 0 0.5em;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 2em auto;
+            padding: 1em;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center; /* Alineación centrada */
+        }
+    </style>
 </head>
 
 <body>
+    <header>
+        <h1>AIR QUALITY APP</h1>
+    </header>
 
-    <section class="hero is-primary">
-        <div class="hero-body">
-            <div class="container">
-                <h1 class="title">
-                    IoT Data Dashboard
-                </h1>
-                <h2 class="subtitle">
-                    Test Page - OpenAQ Data
-                </h2>
-            </div>
-        </div>
-    </section>
+    <!-- Menú de navegación -->
+    <nav>
+        <a href="/graph">Graph</a>
+        <a href="/worldmap">World Map</a>
+        <a href="/locations">Locations</a>
+        <a href="/data">Data</a>
+    </nav>
 
-    <div class="section">
-        <div class="container">
-            <!-- Sección para mostrar datos en bruto -->
-            <section id="raw-data" class="mt-5">
-                <h3 class="title is-3">Raw Data</h3>
-                <ul id="rawDataList"></ul>
-            </section>
-
-            <section id="select-country" class="mt-5">
-                <h3 class="title is-3">Select Country</h3>
-                <form onsubmit="return updateCountry()">
-                    <div class="field is-grouped">
-                        <p class="control">
-                            <input class="input" type="text" placeholder="Enter Country Code" id="countryInput" required>
-                        </p>
-                        <p class="control">
-                            <button type="submit" class="button is-primary">Update Country</button>
-                        </p>
-                    </div>
-                </form>
-            </section>
-        </div>
+    <!-- Contenido principal -->
+    <div class="container">
+        <h2>Welcome to the Air Quality App!</h2>
+        <p>Please select an option from the menu above to explore the air quality data extracted from different sensors placed around the world</p>
     </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const socket = io.connect('http://' + document.domain + ':' + location.port);
-
-            socket.on('air_quality_data', function (data) {
-                console.log('Datos recibidos:', data); // datos recibidos en la consola del navegador
-                updateRawData(data);
-            });
-
-            function updateRawData(data) {
-                const list = document.getElementById('rawDataList'); // Obtener el elemento <ul>
-                const listItem = document.createElement('li'); // Crear un elemento <li>
-                listItem.textContent = JSON.stringify(data); // Establecer el contenido de texto del elemento <li>
-                list.appendChild(listItem); // Agregar el elemento <li> al elemento <ul>
-            }
-
-            function updateCountry() {
-                const countryInput = document.getElementById('countryInput').value;
-                // Enviar el país al servidor usando una solicitud AJAX o similar
-                fetch(`/update_country?country=${countryInput}`, { method: 'POST' })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! Status: ${response.status}`);
-                        }
-                        // Actualizar el país en el frontend si la solicitud es exitosa
-                        alert(`Country updated to: ${countryInput}`);
-                    })
-                    .catch(error => {
-                        console.error('Fetch error:', error);
-                        alert('Error updating country. Please try again.');
-                    });
-                return false;  // Evita que el formulario se envíe normalmente
-            }
-        });
-    </script>
-
 </body>
 
 </html>
+
+
