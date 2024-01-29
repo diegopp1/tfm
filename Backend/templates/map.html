@@ -62,12 +62,13 @@
     <script>
         var map = L.map('map').setView([0, 0], 2);
         var heatLayer;
+        var data;  // Nueva variable para almacenar los datos
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-        function updateMap(data) {
+        function updateMap() {
             console.log('Data received:', data);
 
             var heatData = [];
@@ -115,7 +116,6 @@
             var content = '<b>Coordinates:</b> ' + latlng.lat.toFixed(2) + ', ' + latlng.lng.toFixed(2) + '<br>';
             content += '<b>Averages:</b><br>';
 
-            // Obtener datos de país más cercano a las coordenadas del evento
             var countryData = getCountryDataForCoordinates(latlng.lat, latlng.lng);
             if (countryData) {
                 content += 'PM10: ' + countryData.pm10_average.toFixed(2) + '<br>';
@@ -149,7 +149,9 @@
             fetch('/get_map_data')
                 .then(response => response.json())
                 .then(data => {
-                    updateMap(data);
+                    // Almacena los datos para su uso posterior
+                    this.data = data;
+                    updateMap();
                 })
                 .catch(error => {
                     console.error('Error fetching map data:', error);
@@ -161,5 +163,6 @@
 </body>
 
 </html>
+
 
 
