@@ -81,14 +81,14 @@
             for (var country in data) {
                 if (data.hasOwnProperty(country)) {
                     var countryData = data[country];
-                    var pm10 = countryData.pm10_average;
-                    var pm25 = countryData.pm25_average;
-                    var um100 = countryData.um100_average;
+                    if (!countryData.location) continue;
 
-                    if (countryData.location) {
-                        var color = getColorForCountry(pm10, pm25, um100, thresholds);
-                        heatData.push([countryData.location.lat, countryData.location.lon, color]);
-                    }
+                    var pm10 = countryData.pm10_average || 0;
+                    var pm25 = countryData.pm25_average || 0;
+                    var um100 = countryData.um100_average || 0;
+
+                    var color = getColorForCountry(pm10, pm25, um100, thresholds);
+                    heatData.push([countryData.location.lat, countryData.location.lon, color]);
                 }
             }
 
@@ -121,9 +121,9 @@
 
             var countryData = getCountryDataForCoordinates(latlng.lat, latlng.lng);
             if (countryData) {
-                content += 'PM10: ' + countryData.pm10_average.toFixed(2) + '<br>';
-                content += 'PM25: ' + countryData.pm25_average.toFixed(2) + '<br>';
-                content += 'UM100: ' + countryData.um100_average.toFixed(4) + '<br>';
+                content += 'PM10: ' + (countryData.pm10_average || 0).toFixed(2) + '<br>';
+                content += 'PM25: ' + (countryData.pm25_average || 0).toFixed(2) + '<br>';
+                content += 'UM100: ' + (countryData.um100_average || 0).toFixed(4) + '<br>';
             } else {
                 content += 'No data available for this location.';
             }
@@ -175,18 +175,17 @@
             };
 
             return (
-                countryData.pm10_average > thresholds.pm10 ||
-                countryData.pm25_average > thresholds.pm25 ||
-                countryData.um100_average > thresholds.um100
+                (countryData.pm10_average || 0) > thresholds.pm10 ||
+                (countryData.pm25_average || 0) > thresholds.pm25 ||
+                (countryData.um100_average || 0) > thresholds.um100
             );
         }
 
         function getTooltipContent(countryData) {
-            var content = '<b>Country:</b> ' + countryData.country + '<br>';
-            content += '<b>Averages:</b><br>';
-            content += 'PM10: ' + countryData.pm10_average.toFixed(2) + '<br>';
-            content += 'PM25: ' + countryData.pm25_average.toFixed(2) + '<br>';
-            content += 'UM100: ' + countryData.um100_average.toFixed(4) + '<br>';
+            var content = '<b>' + countryData.country + '</b><br>';
+            content += 'PM10: ' + (countryData.pm10_average || 0).toFixed(2) + '<br>';
+            content += 'PM25: ' + (countryData.pm25_average || 0).toFixed(2) + '<br>';
+            content += 'UM100: ' + (countryData.um100_average || 0).toFixed(4) + '<br>';
 
             return content;
         }
@@ -211,3 +210,4 @@
 </body>
 
 </html>
+
