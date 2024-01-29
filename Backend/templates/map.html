@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Map - Air Quality</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+</head>
+
+<body>
+    <div id="map" style="height: 500px;"></div>
+
+    <script>
+        // Código JavaScript para el mapa
+        var map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Función para actualizar el mapa con datos
+        function updateMap(data) {
+            var heatData = [];
+
+            // Definir umbrales para colores
+            var pm10Threshold = 20;
+            var pm25Threshold = 10;
+            var um100Threshold = 0.01;
+
+            // Iterar sobre los datos y asignar colores
+            for (var country in data) {
+                var pm10 = data[country].pm10_average;
+                var pm25 = data[country].pm25_average;
+                var um100 = data[country].um100_average;
+
+                // Asignar colores en función de los umbrales
+                var color = 'green';
+                if (pm10 > pm10Threshold || pm25 > pm25Threshold || um100 > um100Threshold) {
+                    color = 'red';
+                } else if (pm10 > pm10Threshold / 2 || pm25 > pm25Threshold / 2 || um100 > um100Threshold / 2) {
+                    color = 'yellow';
+                }
+
+                // Añadir la posición y el color al conjunto de datos para el mapa de calor
+                if (data[country].location && color !== 'green') {
+                    heatData.push([data[country].location.lat, data[country].location.lon, color]);
+                }
+            }
+
+            // Crear capa de calor y añadirla al mapa
+            var heat = L.heatLayer(heatData, { radius: 25 }).addTo(map);
+        }
+
+        // Función para cargar datos del servidor y actualizar el mapa
+        function loadData() {
+            fetch('/get_map_data')
+                .then(response => response.json())
+                .then(data => {
+                    updateMap(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching map data:', error);
+                });
+        }
+
+        // Llamar a la función de carga de datos al cargar la página
+        loadData();
+    </script>
+</body>
+
+</html>

@@ -180,6 +180,14 @@ def generate_data():
         handle_devices(entry)
         print("Datos de calidad del aire insertados en MongoDB.")
     return 'Generating data...'
+@app.route('/worldmap')
+def world_map():
+    return render_template('map.html')
+
+@app.route('/get_map_data', methods=['GET'])
+def get_map_data():
+    averages_by_country = calculate_average_by_country(mongo_locations_collection)
+    return jsonify(averages_by_country)
 
 @app.route('/data')
 def data():
