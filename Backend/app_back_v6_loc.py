@@ -120,7 +120,7 @@ def get_graph_data():
     y_parameters = ['pm10', 'pm25', 'um100']
     print(f"Selected X-axis: {x_axis_field}, Y-axis: {y_axis_field}")
     # Si el eje X es 'country' y el eje Y es pm10, pm25 o um100
-    if x_axis_field == 'country' and y_axis_field in ['pm10', 'pm25', 'um100']:
+    if x_axis_field == 'country' and any(y_axis_field.endswith(f'({param})') for param in y_parameters):
         averages_by_country = calculate_average_by_country(mongo_locations_collection)
         return jsonify(averages_by_country)
 
