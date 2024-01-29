@@ -34,7 +34,7 @@ except Exception as e:
 mongo_db = mongo_client['iot_data']
 mongo_air_quality_collection = mongo_db['air_quality']
 mongo_locations_collection = mongo_db['locations']
-
+mongo_countries_collection = mongo_db['countries']
 # Crear el consumidor de Kafka
 consumer = Consumer({
     'bootstrap.servers': 'localhost:9092',
@@ -301,24 +301,28 @@ def calculate_average_by_country(collection):
     return averages_by_country
 
 def get_averages_with_coordinates(collection):
+    # Obtener la información de coordenadas de cada país desde la colección 'countries'
+    country_coordinates = {}
+    for country_info in mongo_countries_collection.find({}, {'country': 1, 'latitude': 1, 'longitude': 1, '_id': 0}):
+        country_code = country_info['country']
+        coordinates = {'latitude': country_info['latitude'], 'longitude': country_info['longitude']}
+        country_coordinates[country_code] = coordinates
+
     averages_by_country = calculate_average_by_country(collection)
 
     # Agregar coordenadas a las medias por país
     averages_with_coordinates = {}
     for country, averages in averages_by_country.items():
-        country_data = list(
-            collection.find({'country': country, 'coordinates': {'$exists': True}}, {'coordinates': 1, '_id': 0}))
-
-        if country_data:
-            coordinates = country_data[0].get('coordinates', {})
+        coordinates = country_coordinates.get(country, {})
+        if coordinates:
             averages_with_coordinates[country] = {
                 'pm10_average': averages['pm10_average'],
                 'pm25_average': averages['pm25_average'],
                 'um100_average': averages['um100_average'],
-                'location': {'lat': coordinates.get('latitude'), 'lon': coordinates.get('longitude')}
+                'location': {'lat': coordinates['latitude'], 'lon': coordinates['longitude']}
             }
         else:
-            print(f'No se encontraron coordenadas para el país {country}.')  # Añadido el nombre del país
+            print(f'No se encontraron coordenadas para el país {country} en la colección "countries".')
 
     return averages_with_coordinates
 
