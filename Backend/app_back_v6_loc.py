@@ -315,13 +315,12 @@ def get_averages_with_coordinates(collection):
                 'pm10_average': averages['pm10_average'],
                 'pm25_average': averages['pm25_average'],
                 'um100_average': averages['um100_average'],
-                'location': {'lat': coordinates.get('latitude', 0), 'lon': coordinates.get('longitude', 0)}
+                'location': {'lat': coordinates.get('latitude'), 'lon': coordinates.get('longitude')}
             }
         else:
-            print('No se encontraron coordenadas para el país.') # Para comprobar si hay países sin coordenadas
+            print(f'No se encontraron coordenadas para el país {country}.')  # Añadido el nombre del país
 
     return averages_with_coordinates
-
 
 if __name__ == '__main__':
     socketio.start_background_task(target=background_thread)
