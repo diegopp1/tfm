@@ -53,16 +53,24 @@
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
+        // Capa de calor inicial vacía
+        var heatLayer = L.heatLayer([], { radius: 25 }).addTo(map);
+
+        // Definir umbrales para colores
+        var thresholds = {
+            pm10: 20,
+            pm25: 10,
+            um100: 0.01
+        };
+
+        // Controlador de eventos para mostrar información al hacer clic en un punto del mapa
+        map.on('click', function (e) {
+            alert("Latitud: " + e.latlng.lat.toFixed(2) + ", Longitud: " + e.latlng.lng.toFixed(2));
+        });
+
         // Función para actualizar el mapa con datos
         function updateMap(data) {
             var heatData = [];
-
-            // Definir umbrales para colores
-            var thresholds = {
-                pm10: 20,
-                pm25: 10,
-                um100: 0.01
-            };
 
             // Iterar sobre los datos y asignar colores
             data.forEach(countryData => {
@@ -79,13 +87,14 @@
                 }
 
                 // Añadir la posición y el color al conjunto de datos para el mapa de calor
-                if (countryData.coordinates && color !== 'green') {
-                    heatData.push([countryData.coordinates.latitude, countryData.coordinates.longitude, color]);
+                if (countryData.location && color !== 'green') {
+                    heatData.push([countryData.location.lat, countryData.location.lon, color]);
                 }
             });
 
-            // Crear capa de calor y añadirla al mapa
-            var heat = L.heatLayer(heatData, { radius: 25 }).addTo(map);
+            // Limpiar la capa de calor existente y agregar la nueva capa de calor
+            map.removeLayer(heatLayer);
+            heatLayer = L.heatLayer(heatData, { radius: 25 }).addTo(map);
         }
 
         // Función para cargar datos del servidor y actualizar el mapa
@@ -106,4 +115,3 @@
 </body>
 
 </html>
-
