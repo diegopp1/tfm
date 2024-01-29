@@ -30,10 +30,10 @@
             var um100Threshold = 0.01;
 
             // Iterar sobre los datos y asignar colores
-            for (var country in data) {
-                var pm10 = data[country].pm10_average;
-                var pm25 = data[country].pm25_average;
-                var um100 = data[country].um100_average;
+            data.forEach(countryData => {
+                var pm10 = countryData.pm10_average;
+                var pm25 = countryData.pm25_average;
+                var um100 = countryData.um100_average;
 
                 // Asignar colores en función de los umbrales
                 var color = 'green';
@@ -44,10 +44,10 @@
                 }
 
                 // Añadir la posición y el color al conjunto de datos para el mapa de calor
-                if (data[country].location && color !== 'green') {
-                    heatData.push([data[country].location.lat, data[country].location.lon, color]);
+                if (countryData.coordinates && color !== 'green') {
+                    heatData.push([countryData.coordinates.latitude, countryData.coordinates.longitude, color]);
                 }
-            }
+            });
 
             // Crear capa de calor y añadirla al mapa
             var heat = L.heatLayer(heatData, { radius: 25 }).addTo(map);

@@ -186,8 +186,8 @@ def world_map():
 
 @app.route('/get_map_data', methods=['GET'])
 def get_map_data():
-    averages_by_country = calculate_average_by_country(mongo_locations_collection)
-    return jsonify(averages_by_country)
+    averages_with_coordinates = get_averages_with_coordinates(mongo_locations_collection)
+    return jsonify(averages_with_coordinates)
 
 @app.route('/data')
 def data():
@@ -297,6 +297,55 @@ def calculate_average_by_country(collection):
         }
 
     return averages_by_country
+def get_averages_with_coordinates(collection):
+    # Obtener la lista de países únicos presentes en la colección
+    unique_countries = collection.distinct('country')
+
+    # Inicializar una lista para almacenar los datos de promedio y coordenadas por país
+    averages_with_coordinates = []
+
+    # Iterar sobre cada país y calcular la media para pm10, pm25 y um100
+    for country in unique_countries:
+        country_data = collection.find({'country': country}, {'parameters': 1, 'coordinates': 1, '_id': 0})
+
+        # Inicializar listas para almacenar valores de pm10, pm25 y um100 para el país actual
+        pm10_values = []
+        pm25_values = []
+        um100_values = []
+
+        # Iterar sobre los documentos del país actual
+        for entry in country_data:
+            for param in entry.get('parameters', []):
+                parameter = param.get('parameter')
+                last_value = param.get('lastValue', 0)
+
+                # Almacenar valores en las listas correspondientes
+                if parameter == 'pm10':
+                    pm10_values.append(last_value)
+                elif parameter == 'pm25':
+                    pm25_values.append(last_value)
+                elif parameter == 'um100':
+                    um100_values.append(last_value)
+
+        # Calcular la media para pm10, pm25 y um100
+        pm10_average = mean(pm10_values) if pm10_values else 0
+        pm25_average = mean(pm25_values) if pm25_values else 0
+        um100_average = mean(um100_values) if um100_values else 0
+
+        # Obtener las coordenadas
+        coordinates = entry.get('coordinates', {'latitude': 0, 'longitude': 0})
+
+        # Agregar los promedios y coordenadas al resultado
+        averages_with_coordinates.append({
+            'country': country,
+            'pm10_average': pm10_average,
+            'pm25_average': pm25_average,
+            'um100_average': um100_average,
+            'coordinates': coordinates
+        })
+
+    return averages_with_coordinates
+
 if __name__ == '__main__':
     socketio.start_background_task(target=background_thread)
     socketio.run(app, debug=True, allow_unsafe_werkzeug=True, use_reloader=False)
