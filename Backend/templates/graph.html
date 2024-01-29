@@ -113,28 +113,34 @@
                 .then(response => response.json())
                 .then(data => {
                     console.log('Graph data:', data);
-
                     // Verificar si el eje X es 'country' y ajustar el formato de los datos
-                    if (xAxisField === 'country') {
-                        // Mostrar los valores calculados en lugar de generar una gráfica
+                    // Verificar si el eje X es 'country' y ajustar el formato de los datos
+                    // Verificar si el eje X es 'country' y ajustar el formato de los datos
+                  if (xAxisField === 'country') {
+                        // Sólo muestrame los datos calculados
                         const xValues = Object.keys(data);
-                        const yValues = Object.values(data);
+                        const paramName = yAxisField.match(/\(([^)]+)\)/)[1]; // Extraer el parámetro entre paréntesis
+                        const yValues = Object.values(data).map(countryData => countryData[paramName + '_average']);
 
-                        // Construir la tabla de valores
-                        resultContainer.innerHTML = `
-                            <h4 class="title is-4">Averages by Country (${yAxisField})</h4>
+                        // Mostrar la información de manera legible en una tabla
+                        const resultTable = `
                             <table class="table">
                                 <thead>
                                     <tr>
-                                        <th>Country</th>
-                                        <th>${yAxisField}</th>
+                                        <th>${xAxisField}</th>
+                                        <th>${paramName}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${xValues.map((country, index) => `<tr><td>${country}</td><td>${yValues[index]}</td></tr>`).join('')}
+                                    ${xValues.map((country, index) => `<tr><td>${country}</td><td>${yValues[index] !== undefined ? yValues[index].toFixed(2) : 'N/A'}</td></tr>`).join('')}
                                 </tbody>
                             </table>
                         `;
+
+                        // Insertar la tabla en el contenedor
+                        graphContainer.innerHTML = resultTable;
+
+
                     } else {
                         // Resto del código para 'name' (sin cambios)
                         const xValues = Array.isArray(data) ? data.map(entry => entry[xAxisField]) : [data[xAxisField]];
