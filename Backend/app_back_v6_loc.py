@@ -300,13 +300,20 @@ def calculate_average_by_country(collection):
 
     return averages_by_country
 
+# ...
+
 def get_averages_with_coordinates(collection):
     # Obtener la información de coordenadas de cada país desde la colección 'countries'
     country_coordinates = {}
-    for country_info in mongo_countries_collection.find({}, {'country': 1, 'latitude': 1, 'longitude': 1, '_id': 0}):
+    for country_info in mongo_countries_collection.find({}, {'country': 1, 'coordinates': 1, '_id': 0}):
         country_code = country_info['country']
-        coordinates = {'latitude': country_info['latitude'], 'longitude': country_info['longitude']}
-        country_coordinates[country_code] = coordinates
+        coordinates = country_info.get('coordinates', {})
+        latitude = coordinates.get('latitude')
+        longitude = coordinates.get('longitude')
+        if latitude is not None and longitude is not None:
+            country_coordinates[country_code] = coordinates
+        else:
+            print(f'Documento de país sin coordenadas válidas en la colección "countries": {country_info}')
 
     averages_by_country = calculate_average_by_country(collection)
 
@@ -315,12 +322,31 @@ def get_averages_with_coordinates(collection):
     for country, averages in averages_by_country.items():
         coordinates = country_coordinates.get(country, {})
         if coordinates:
-            averages_with_coordinates[country] = {
-                'pm10_average': averages['pm10_average'],
-                'pm25_average': averages['pm25_average'],
-                'um100_average': averages['um100_average'],
-                'location': {'lat': coordinates['latitude'], 'lon': coordinates['longitude']}
-            }
+            print(f'Coordenadas encontradas para el país {country}: {coordinates}')
+            print(f'Averages para el país {country}: {averages}')
+
+            # Verificar si los averages superan los umbrales
+            pm10_threshold = 20  # Establecer los umbrales según sea necesario
+            pm25_threshold = 15
+            um100_threshold = 0.005
+
+            # Comprobar umbrales
+            pm10_above_threshold = averages['pm10_average'] > pm10_threshold
+            pm25_above_threshold = averages['pm25_average'] > pm25_threshold
+            um100_above_threshold = averages['um100_average'] > um100_threshold
+
+            print(f'PM10 supera umbral: {pm10_above_threshold}')
+            print(f'PM25 supera umbral: {pm25_above_threshold}')
+            print(f'UM100 supera umbral: {um100_above_threshold}')
+
+            # Solo agregar a la respuesta si se superan los umbrales
+            if pm10_above_threshold or pm25_above_threshold or um100_above_threshold:
+                averages_with_coordinates[country] = {
+                    'pm10_average': averages['pm10_average'],
+                    'pm25_average': averages['pm25_average'],
+                    'um100_average': averages['um100_average'],
+                    'location': {'lat': coordinates.get('latitude'), 'lon': coordinates.get('longitude')}
+                }
         else:
             print(f'No se encontraron coordenadas para el país {country} en la colección "countries".')
 
