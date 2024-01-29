@@ -118,19 +118,11 @@ def get_graph_data():
 
     # Lista de parámetros que quieres incluir en la gráfica
     y_parameters = ['pm10', 'pm25', 'um100']
-
+    print(f"Selected X-axis: {x_axis_field}, Y-axis: {y_axis_field}")
     # Si el eje X es 'country' y el eje Y es pm10, pm25 o um100
     if x_axis_field == 'country' and y_axis_field in ['pm10', 'pm25', 'um100']:
         averages_by_country = calculate_average_by_country(mongo_locations_collection)
-
-        # Crear lista de diccionarios para cada país
-        data_list = []
-        for country, averages in averages_by_country.items():
-            entry = {'country': country}
-            entry[y_axis_field] = averages[y_axis_field + '_average']
-            data_list.append(entry)
-
-        return jsonify(data_list)
+        return jsonify(averages_by_country)
 
     # Si el eje X es 'name', proceder con la lógica original
     elif x_axis_field == 'name':

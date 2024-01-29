@@ -67,9 +67,14 @@
                     </div>
                 </form>
 
-                <!-- Contenedor para mostrar la gráfica -->
+                <!-- Contenedor para mostrar la gráfica o valores -->
                 <div id="graph-container" class="mt-5">
                     <!-- Aquí se mostrará la gráfica generada -->
+                </div>
+
+                <!-- Contenedor para mostrar valores calculados -->
+                <div id="result-container" class="mt-5">
+                    <!-- Aquí se mostrarán los valores calculados -->
                 </div>
             </section>
         </div>
@@ -86,6 +91,7 @@
             // Lógica adicional para manejar la generación de gráficos
             const graphForm = document.getElementById('graph-form');
             const graphContainer = document.getElementById('graph-container');
+            const resultContainer = document.getElementById('result-container');
 
             graphForm.addEventListener('submit', function (event) {
                 event.preventDefault();
@@ -93,7 +99,7 @@
                 const xAxisField = document.getElementById('x-axis-field').value;
                 const yAxisField = document.getElementById('y-axis-field').value;
 
-                // Lógica para solicitar datos al servidor con los campos seleccionados y generar la gráfica
+                // Lógica para solicitar datos al servidor con los campos seleccionados y generar la gráfica o mostrar valores
                 fetch('/get_graph_data', {
                     method: 'POST',
                     headers: {
@@ -106,31 +112,34 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    // Utiliza Plotly para crear la gráfica interactiva
-                    const xValues = data.map(entry => entry[xAxisField]);
-                    const yValues = data.map(entry => entry[yAxisField]);
+                    console.log('Graph data:', data);
 
                     // Verificar si el eje X es 'country' y ajustar el formato de los datos
                     if (xAxisField === 'country') {
-                        // Convertir a un formato compatible con Plotly para 'country'
-                        const uniqueCountries = [...new Set(xValues)];
-                        const groupedData = uniqueCountries.map(country => ({
-                            x: [country],
-                            y: [yValues[uniqueCountries.indexOf(country)]],
-                            type: 'bar',
-                            name: country
-                        }));
+                        // Mostrar los valores calculados en lugar de generar una gráfica
+                        const xValues = Object.keys(data);
+                        const yValues = Object.values(data);
 
-                        const layout = {
-                            title: `Graph: ${yAxisField} vs ${xAxisField}`,
-                            xaxis: { title: xAxisField },
-                            yaxis: { title: yAxisField },
-                            barmode: 'group'  // Agrupar las barras por país
-                        };
-
-                        Plotly.newPlot(graphContainer, groupedData, layout);
+                        // Construir la tabla de valores
+                        resultContainer.innerHTML = `
+                            <h4 class="title is-4">Averages by Country (${yAxisField})</h4>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Country</th>
+                                        <th>${yAxisField}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${xValues.map((country, index) => `<tr><td>${country}</td><td>${yValues[index]}</td></tr>`).join('')}
+                                </tbody>
+                            </table>
+                        `;
                     } else {
-                        // Formato original para 'name'
+                        // Resto del código para 'name' (sin cambios)
+                        const xValues = Array.isArray(data) ? data.map(entry => entry[xAxisField]) : [data[xAxisField]];
+                        const yValues = Array.isArray(data) ? data.map(entry => entry[yAxisField]) : [data[yAxisField]];
+
                         const trace = {
                             x: xValues,
                             y: yValues,
@@ -156,3 +165,5 @@
 </body>
 
 </html>
+
+
