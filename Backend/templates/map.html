@@ -26,23 +26,11 @@
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 12px;
-            z-index: 1000;
+            z-index: 1000; /* Asegurar que la leyenda esté sobre el mapa */
         }
 
         .legend-item {
             margin-bottom: 5px;
-        }
-
-        #info {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            padding: 10px;
-            background-color: white;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 14px;
-            z-index: 1000;
         }
     </style>
 </head>
@@ -56,19 +44,17 @@
             <div class="legend-item" style="background-color: yellow; color: white; padding: 5px; border-radius: 3px;">Moderate (Slight concern)</div>
             <div class="legend-item" style="background-color: red; color: white; padding: 5px; border-radius: 3px;">Unhealthy (Health alert)</div>
         </div>
-        <div id="info"></div>
     </div>
 
     <script>
         var map = L.map('map').setView([0, 0], 2);
-        var heatLayer;
-        var data;  // Nueva variable para almacenar los datos
-
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-        function updateMap() {
+        var heatLayer;
+
+        function updateMap(data) {
             console.log('Data received:', data);
 
             var heatData = [];
@@ -95,7 +81,8 @@
             if (heatLayer) {
                 map.removeLayer(heatLayer);
             }
-            heatLayer = L.heatLayer(heatData, { radius: 25 }).addTo(map);
+
+            heatLayer = L.heatLayer(heatData, { radius: 25, maxZoom: 6, max: 1 }).addTo(map);
         }
 
         function getColorForCountry(pm10, pm25, um100, thresholds) {
@@ -108,61 +95,23 @@
             }
         }
 
-        function showInfoOnHover(event) {
-            var infoContainer = document.getElementById('info');
-            infoContainer.innerHTML = '';
-
-            var latlng = event.latlng;
-            var content = '<b>Coordinates:</b> ' + latlng.lat.toFixed(2) + ', ' + latlng.lng.toFixed(2) + '<br>';
-            content += '<b>Averages:</b><br>';
-
-            var countryData = getCountryDataForCoordinates(latlng.lat, latlng.lng);
-            if (countryData) {
-                content += 'PM10: ' + countryData.pm10_average.toFixed(2) + '<br>';
-                content += 'PM25: ' + countryData.pm25_average.toFixed(2) + '<br>';
-                content += 'UM100: ' + countryData.um100_average.toFixed(4) + '<br>';
-            } else {
-                content += 'No data available for this location.';
-            }
-
-            infoContainer.innerHTML = content;
-        }
-
-        function getCountryDataForCoordinates(lat, lon) {
-            for (var country in data) {
-                if (data.hasOwnProperty(country)) {
-                    var countryData = data[country];
-                    var latCountry = countryData.location.lat;
-                    var lonCountry = countryData.location.lon;
-
-                    if (Math.abs(latCountry - lat) < 0.1 && Math.abs(lonCountry - lon) < 0.1) {
-                        return countryData;
-                    }
-                }
-            }
-            return null;
-        }
-
-        map.on('mousemove', showInfoOnHover);
-
-        function loadData() {
+        function loadMapData() {
             fetch('/get_map_data')
                 .then(response => response.json())
                 .then(data => {
-                    // Almacena los datos para su uso posterior
-                    this.data = data;
-                    updateMap();
+                    updateMap(data);
                 })
                 .catch(error => {
                     console.error('Error fetching map data:', error);
                 });
         }
 
-        loadData();
+        loadMapData();
     </script>
 </body>
 
 </html>
+
 
 
 
