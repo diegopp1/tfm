@@ -8,7 +8,6 @@ mongo_client = MongoClient(mongo_uri)
 
 # Base de datos y colecciones
 mongo_db = mongo_client['iot_data']
-mongo_locations_collection = mongo_db['locations']
 mongo_countries_collection = mongo_db['countries']
 
 # Datos de coordenadas de capitales
