@@ -76,7 +76,8 @@ def generate_filtered_device(data):
         'parameters': [
             param for param in data.get('parameters', [])
             if param.get('id') in [1, 2, 135]  # Filtrar por ID 1, 2 y 135
-        ]
+        ],
+        'coordinates': data.get('coordinates')
     }
 
 def generate_filtered_data(data):
@@ -88,7 +89,8 @@ def generate_filtered_data(data):
         'parameters': [
             param for param in data.get('parameters', [])
             if param.get('id') in [1, 2, 135]  # Filtrar por ID 1, 2 y 135
-        ]
+        ],
+        'coordinates': data.get('coordinates')
     }
 
 def background_thread():
@@ -298,25 +300,28 @@ def calculate_average_by_country(collection):
 
     return averages_by_country
 
-
 def get_averages_with_coordinates(collection):
     averages_by_country = calculate_average_by_country(collection)
 
     # Agregar coordenadas a las medias por país
     averages_with_coordinates = {}
     for country, averages in averages_by_country.items():
-        country_data = collection.find({'country': country, 'coordinates': {'$exists': True}},
-                                       {'coordinates': 1, '_id': 0})
-        coordinates = country_data[0].get('coordinates', {}) if country_data.count() > 0 else {}
+        country_data = list(
+            collection.find({'country': country, 'coordinates': {'$exists': True}}, {'coordinates': 1, '_id': 0}))
 
-        averages_with_coordinates[country] = {
-            'pm10_average': averages['pm10_average'],
-            'pm25_average': averages['pm25_average'],
-            'um100_average': averages['um100_average'],
-            'location': {'lat': coordinates.get('latitude', 0), 'lon': coordinates.get('longitude', 0)}
-        }
+        if country_data:
+            coordinates = country_data[0].get('coordinates', {})
+            averages_with_coordinates[country] = {
+                'pm10_average': averages['pm10_average'],
+                'pm25_average': averages['pm25_average'],
+                'um100_average': averages['um100_average'],
+                'location': {'lat': coordinates.get('latitude', 0), 'lon': coordinates.get('longitude', 0)}
+            }
+        else:
+            print('No se encontraron coordenadas para el país.') # Para comprobar si hay países sin coordenadas
 
     return averages_with_coordinates
+
 
 if __name__ == '__main__':
     socketio.start_background_task(target=background_thread)
