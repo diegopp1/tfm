@@ -26,7 +26,7 @@
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 12px;
-            z-index: 1000; /* Asegurar que la leyenda esté sobre el mapa */
+            z-index: 1000;
         }
 
         .legend-item {
@@ -47,53 +47,54 @@
     </div>
 
     <script>
-        // Código JavaScript para el mapa
         var map = L.map('map').setView([0, 0], 2);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-        // Capa de calor inicial vacía
-        var heatLayer = L.heatLayer([], { radius: 25 }).addTo(map);
-
-        // Definir umbrales para colores
-        var thresholds = {
-            pm10: 20,
-            pm25: 10,
-            um100: 0.01
-        };
-
-        // Controlador de eventos para mostrar información al hacer clic en un punto del mapa
-        map.on('click', function (e) {
-            alert("Latitud: " + e.latlng.lat.toFixed(2) + ", Longitud: " + e.latlng.lng.toFixed(2));
-        });
+        // Capa de calor global para poder eliminarla posteriormente
+        var heatLayer;
 
         // Función para actualizar el mapa con datos
         function updateMap(data) {
+            console.log('Data received:', data);
+
             var heatData = [];
 
-            // Iterar sobre los datos y asignar colores
-            data.forEach(countryData => {
-                var pm10 = countryData.pm10_average;
-                var pm25 = countryData.pm25_average;
-                var um100 = countryData.um100_average;
+            // Definir umbrales para colores
+            var thresholds = {
+                pm10: 20,
+                pm25: 10,
+                um100: 0.01
+            };
 
-                // Asignar colores en función de los umbrales
-                var color = 'green';
-                if (pm10 > thresholds.pm10 || pm25 > thresholds.pm25 || um100 > thresholds.um100) {
-                    color = 'red';
-                } else if (pm10 > thresholds.pm10 / 2 || pm25 > thresholds.pm25 / 2 || um100 > thresholds.um100 / 2) {
-                    color = 'yellow';
-                }
+            // Iterar sobre las propiedades del objeto data
+            for (var country in data) {
+                if (data.hasOwnProperty(country)) {
+                    var countryData = data[country];
+                    var pm10 = countryData.pm10_average;
+                    var pm25 = countryData.pm25_average;
+                    var um100 = countryData.um100_average;
 
-                // Añadir la posición y el color al conjunto de datos para el mapa de calor
-                if (countryData.location && color !== 'green') {
-                    heatData.push([countryData.location.lat, countryData.location.lon, color]);
+                    // Asignar colores en función de los umbrales
+                    var color = 'green';
+                    if (pm10 > thresholds.pm10 || pm25 > thresholds.pm25 || um100 > thresholds.um100) {
+                        color = 'red';
+                    } else if (pm10 > thresholds.pm10 / 2 || pm25 > thresholds.pm25 / 2 || um100 > thresholds.um100 / 2) {
+                        color = 'yellow';
+                    }
+
+                    // Añadir la posición y el color al conjunto de datos para el mapa de calor
+                    if (countryData.location && color !== 'green') {
+                        heatData.push([countryData.location.lat, countryData.location.lon, color]);
+                    }
                 }
-            });
+            }
 
             // Limpiar la capa de calor existente y agregar la nueva capa de calor
-            map.removeLayer(heatLayer);
+            if (heatLayer) {
+                map.removeLayer(heatLayer);
+            }
             heatLayer = L.heatLayer(heatData, { radius: 25 }).addTo(map);
         }
 
@@ -115,3 +116,4 @@
 </body>
 
 </html>
+
