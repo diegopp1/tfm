@@ -297,52 +297,24 @@ def calculate_average_by_country(collection):
         }
 
     return averages_by_country
+
+
 def get_averages_with_coordinates(collection):
-    # Obtener la lista de países únicos presentes en la colección
-    unique_countries = collection.distinct('country')
+    averages_by_country = calculate_average_by_country(collection)
 
-    # Inicializar una lista para almacenar los datos de promedio y coordenadas por país
-    averages_with_coordinates = []
+    # Agregar coordenadas a las medias por país
+    averages_with_coordinates = {}
+    for country, averages in averages_by_country.items():
+        country_data = collection.find({'country': country, 'coordinates': {'$exists': True}},
+                                       {'coordinates': 1, '_id': 0})
+        coordinates = country_data[0].get('coordinates', {}) if country_data.count() > 0 else {}
 
-    # Iterar sobre cada país y calcular la media para pm10, pm25 y um100
-    for country in unique_countries:
-        country_data = collection.find({'country': country}, {'parameters': 1, 'coordinates': 1, '_id': 0})
-
-        # Inicializar listas para almacenar valores de pm10, pm25 y um100 para el país actual
-        pm10_values = []
-        pm25_values = []
-        um100_values = []
-
-        # Iterar sobre los documentos del país actual
-        for entry in country_data:
-            for param in entry.get('parameters', []):
-                parameter = param.get('parameter')
-                last_value = param.get('lastValue', 0)
-
-                # Almacenar valores en las listas correspondientes
-                if parameter == 'pm10':
-                    pm10_values.append(last_value)
-                elif parameter == 'pm25':
-                    pm25_values.append(last_value)
-                elif parameter == 'um100':
-                    um100_values.append(last_value)
-
-        # Calcular la media para pm10, pm25 y um100
-        pm10_average = mean(pm10_values) if pm10_values else 0
-        pm25_average = mean(pm25_values) if pm25_values else 0
-        um100_average = mean(um100_values) if um100_values else 0
-
-        # Obtener las coordenadas
-        coordinates = entry.get('coordinates', {'latitude': 0, 'longitude': 0})
-
-        # Agregar los promedios y coordenadas al resultado
-        averages_with_coordinates.append({
-            'country': country,
-            'pm10_average': pm10_average,
-            'pm25_average': pm25_average,
-            'um100_average': um100_average,
-            'coordinates': coordinates
-        })
+        averages_with_coordinates[country] = {
+            'pm10_average': averages['pm10_average'],
+            'pm25_average': averages['pm25_average'],
+            'um100_average': averages['um100_average'],
+            'location': {'lat': coordinates.get('latitude', 0), 'lon': coordinates.get('longitude', 0)}
+        }
 
     return averages_with_coordinates
 
