@@ -32,6 +32,18 @@
         .legend-item {
             margin-bottom: 5px;
         }
+
+        #info {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            padding: 10px;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 1000;
+        }
     </style>
 </head>
 
@@ -44,31 +56,27 @@
             <div class="legend-item" style="background-color: yellow; color: white; padding: 5px; border-radius: 3px;">Moderate (Slight concern)</div>
             <div class="legend-item" style="background-color: red; color: white; padding: 5px; border-radius: 3px;">Unhealthy (Health alert)</div>
         </div>
+        <div id="info"></div>
     </div>
 
     <script>
         var map = L.map('map').setView([0, 0], 2);
+        var heatLayer;
+
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-        // Capa de calor global para poder eliminarla posteriormente
-        var heatLayer;
-
-        // Función para actualizar el mapa con datos
         function updateMap(data) {
             console.log('Data received:', data);
 
             var heatData = [];
-
-            // Definir umbrales para colores
             var thresholds = {
                 pm10: 20,
                 pm25: 10,
                 um100: 0.01
             };
 
-            // Iterar sobre las propiedades del objeto data
             for (var country in data) {
                 if (data.hasOwnProperty(country)) {
                     var countryData = data[country];
@@ -76,29 +84,67 @@
                     var pm25 = countryData.pm25_average;
                     var um100 = countryData.um100_average;
 
-                    // Asignar colores en función de los umbrales
-                    var color = 'green';
-                    if (pm10 > thresholds.pm10 || pm25 > thresholds.pm25 || um100 > thresholds.um100) {
-                        color = 'red';
-                    } else if (pm10 > thresholds.pm10 / 2 || pm25 > thresholds.pm25 / 2 || um100 > thresholds.um100 / 2) {
-                        color = 'yellow';
-                    }
-
-                    // Añadir la posición y el color al conjunto de datos para el mapa de calor
-                    if (countryData.location && color !== 'green') {
+                    if (countryData.location) {
+                        var color = getColorForCountry(pm10, pm25, um100, thresholds);
                         heatData.push([countryData.location.lat, countryData.location.lon, color]);
                     }
                 }
             }
 
-            // Limpiar la capa de calor existente y agregar la nueva capa de calor
             if (heatLayer) {
                 map.removeLayer(heatLayer);
             }
             heatLayer = L.heatLayer(heatData, { radius: 25 }).addTo(map);
         }
 
-        // Función para cargar datos del servidor y actualizar el mapa
+        function getColorForCountry(pm10, pm25, um100, thresholds) {
+            if (pm10 > thresholds.pm10 || pm25 > thresholds.pm25 || um100 > thresholds.um100) {
+                return 'red';
+            } else if (pm10 > thresholds.pm10 / 2 || pm25 > thresholds.pm25 / 2 || um100 > thresholds.um100 / 2) {
+                return 'yellow';
+            } else {
+                return 'green';
+            }
+        }
+
+        function showInfoOnHover(event) {
+            var infoContainer = document.getElementById('info');
+            infoContainer.innerHTML = '';
+
+            var latlng = event.latlng;
+            var content = '<b>Coordinates:</b> ' + latlng.lat.toFixed(2) + ', ' + latlng.lng.toFixed(2) + '<br>';
+            content += '<b>Averages:</b><br>';
+
+            // Obtener datos de país más cercano a las coordenadas del evento
+            var countryData = getCountryDataForCoordinates(latlng.lat, latlng.lng);
+            if (countryData) {
+                content += 'PM10: ' + countryData.pm10_average.toFixed(2) + '<br>';
+                content += 'PM25: ' + countryData.pm25_average.toFixed(2) + '<br>';
+                content += 'UM100: ' + countryData.um100_average.toFixed(4) + '<br>';
+            } else {
+                content += 'No data available for this location.';
+            }
+
+            infoContainer.innerHTML = content;
+        }
+
+        function getCountryDataForCoordinates(lat, lon) {
+            for (var country in data) {
+                if (data.hasOwnProperty(country)) {
+                    var countryData = data[country];
+                    var latCountry = countryData.location.lat;
+                    var lonCountry = countryData.location.lon;
+
+                    if (Math.abs(latCountry - lat) < 0.1 && Math.abs(lonCountry - lon) < 0.1) {
+                        return countryData;
+                    }
+                }
+            }
+            return null;
+        }
+
+        map.on('mousemove', showInfoOnHover);
+
         function loadData() {
             fetch('/get_map_data')
                 .then(response => response.json())
@@ -110,10 +156,10 @@
                 });
         }
 
-        // Llamar a la función de carga de datos al cargar la página
         loadData();
     </script>
 </body>
 
 </html>
+
 
