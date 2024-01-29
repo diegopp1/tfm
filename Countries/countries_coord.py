@@ -27,7 +27,7 @@ capitals_coordinates = {
     'BR': {'latitude': -15.78, 'longitude': -47.93}, # Brasilia
     'RU': {'latitude': 55.75, 'longitude': 37.62},   # Moscú
     'IN': {'latitude': 28.61, 'longitude': 77.23},   # Nueva Delhi
-    # Añade más capitales según sea necesario
+
 }
 
 # Actualizar datos de coordenadas en la colección 'countries'
