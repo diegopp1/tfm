@@ -28,70 +28,97 @@
             <!-- Barra de búsqueda -->
             <div class="field is-grouped is-grouped-right mb-4">
                 <p class="control has-icons-left">
-                    <input class="input" type="text" placeholder="Buscar...">
+                    <input id="searchInput" class="input" type="text" placeholder="Buscar..." oninput="performSearch()">
                     <span class="icon is-left">
                         <i class="fas fa-search" aria-hidden="true"></i>
                     </span>
                 </p>
             </div>
 
-            <!-- Menú desplegable para filtrar por países -->
-            <div class="field is-grouped is-grouped-right mb-4">
-                <p class="control">
-                    <div class="select">
-                        <select>
-                            <option>Todos los países</option>
-                            <!-- Puedes generar opciones dinámicamente aquí con los países disponibles -->
-                            <option>País 1</option>
-                            <option>País 2</option>
-                            <option>País 3</option>
-                        </select>
-                    </div>
-                </p>
+            <!-- Dashboard mejorado -->
+            <div class="notification is-warning is-light is-size-5 mb-4">
+                <strong>Sensors Available:</strong> <span id="documentCount" class="has-text-white">0</span>
+            </div>
+
+            <!-- Leyenda de países -->
+            <div class="legend-container">
+                <h3 class="title is-5 mb-2">Legend:</h3>
+                <ul class="country-legend">
+                    <li><i class="flag-icon flag-icon-ar"></i> Argentina</li>
+                    <li><i class="flag-icon flag-icon-ca"></i> Canada</li>
+                    <li><i class="flag-icon flag-icon-cl"></i> Chile</li>
+                    <li><i class="flag-icon flag-icon-de"></i> Germany</li>
+                    <li><i class="flag-icon flag-icon-fr"></i> France</li>
+                    <li><i class="flag-icon flag-icon-it"></i> Italy</li>
+                    <li><i class="flag-icon flag-icon-us"></i> United States</li>
+                    <li><i class="flag-icon flag-icon-es"></i> Spain</li>
+                    <li><i class="flag-icon flag-icon-pt"></i> Portugal</li>
+                    <li><i class="flag-icon flag-icon-cn"></i> China</li>
+                    <li><i class="flag-icon flag-icon-jp"></i> Japan</li>
+                    <li><i class="flag-icon flag-icon-br"></i> Brazil</li>
+                </ul>
             </div>
 
             <!-- Sección para mostrar datos almacenados -->
             <section id="stored-data" class="mt-5">
                 <h3 class="title is-3">Stored Data</h3>
                 <ul id="storedDataList">
-                    {% for entry in stored_data %}
-                        <li>
-                            <i class="flag-icon flag-icon-{{ entry.country | lower }}"></i>
-                            <strong>Location:</strong> {{ entry.name }}<br>
-                            <strong>Country:</strong> {{ entry.country }}<br>
-                            <strong>Last Updated:</strong> {{ entry.lastUpdated }}<br>
-                            <strong>Measurements:</strong><br>
-                            <ul>
-                                {% if entry.parameters %}
-                                    {% for parameter in entry.parameters %}
-                                        <li>{{ parameter.parameter }}: {{ parameter.lastValue }} {{ parameter.unit }}</li>
-                                    {% endfor %}
-                                {% endif %}
-                            </ul>
-                            <hr>
-                        </li>
-                    {% endfor %}
+                    <!-- Los datos se actualizarán dinámicamente aquí -->
                 </ul>
             </section>
         </div>
     </div>
 
     <script>
-        // Función para obtener el código de país a partir del nombre del país
-        function getCountryCode(country) {
-            // Puedes implementar lógica adicional aquí para mapear nombres a códigos de país
-            // Por ahora, devuelve el nombre tal cual (en mayúsculas)
-            return country.toUpperCase();
+        document.addEventListener('DOMContentLoaded', function () {
+            // Puedes agregar lógica adicional aquí si es necesario
+            performSearch(); // Realizar la primera búsqueda al cargar la página
+        });
+
+        // Función para realizar la búsqueda y actualizar la página
+        function performSearch() {
+            var searchInput = document.getElementById('searchInput').value;
+
+            fetch('/perform_search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ searchInput: searchInput }),
+            })
+                .then(response => response.json())
+                .then(data => updateStoredDataList(data))
+                .catch(error => console.error('Error performing search:', error));
         }
 
-        document.addEventListener('DOMContentLoaded', function () {
-            const socket = io.connect('http://' + document.domain + ':' + location.port);
-            socket.on('connect', function () {
-                console.log('Conectado al servidor SocketIO!')
-            });
+        // Función para actualizar la lista de datos almacenados
+        function updateStoredDataList(data) {
+            var storedDataList = document.getElementById('storedDataList');
+            storedDataList.innerHTML = '';
 
-            // Puedes agregar lógica adicional aquí si es necesario
-        });
+            data.forEach(entry => {
+                var listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <i class="flag-icon flag-icon-${entry.country.toLowerCase()}"></i>
+                    <strong>Location:</strong> ${entry.name}<br>
+                    <strong>Country:</strong> ${entry.country}<br>
+                    <strong>Last Updated:</strong> ${entry.lastUpdated}<br>
+                    <strong>Measurements:</strong><br>
+                    <ul>
+                        ${entry.parameters ? entry.parameters.map(parameter =>
+                            `<li>${parameter.parameter}: ${parameter.lastValue} ${parameter.unit}</li>`).join('') : ''}
+                    </ul>
+                    <hr>
+                `;
+                storedDataList.appendChild(listItem);
+            });
+        }
+
+        // Función para actualizar el conteo de documentos
+        function updateDocumentCount(count) {
+            var documentCount = document.getElementById('documentCount');
+            documentCount.textContent = count;
+        }
     </script>
 </body>
 

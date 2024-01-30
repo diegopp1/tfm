@@ -196,6 +196,15 @@ def data():
     stored_data = list(mongo_locations_collection.find())
     return render_template('data.html', stored_data=stored_data)
 
+
+@app.route('/perform_search', methods=['POST'])
+def perform_search():
+    search_input = request.json.get('searchInput', '')
+
+    # Realiza la búsqueda en la base de datos según el campo 'country'
+    filtered_data = list(mongo_locations_collection.find({'country': search_input}))
+
+    return jsonify(filtered_data)
 def handle_devices(data):
     id = data.get('id')
     country = data.get('country')
