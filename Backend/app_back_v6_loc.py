@@ -337,31 +337,16 @@ def get_averages_with_coordinates(collection):
             print(f'Coordenadas encontradas para el país {country}: {coordinates}')
             print(f'Averages para el país {country}: {averages}')
 
-            # Verificar si los averages superan los umbrales
-            pm10_threshold = 20  # Establecer los umbrales según sea necesario
-            pm25_threshold = 15
-            um100_threshold = 0.005
-
-            # Comprobar umbrales
-            pm10_above_threshold = averages['pm10_average'] > pm10_threshold
-            pm25_above_threshold = averages['pm25_average'] > pm25_threshold
-            um100_above_threshold = averages['um100_average'] > um100_threshold
-
-            print(f'PM10 supera umbral: {pm10_above_threshold}')
-            print(f'PM25 supera umbral: {pm25_above_threshold}')
-            print(f'UM100 supera umbral: {um100_above_threshold}')
-
-            # Solo agregar a la respuesta si se superan los umbrales
-            if pm10_above_threshold or pm25_above_threshold or um100_above_threshold:
-                averages_with_coordinates[country] = {
-                    'pm10_average': averages['pm10_average'],
-                    'pm25_average': averages['pm25_average'],
-                    'um100_average': averages['um100_average'],
-                    'location': {'lat': coordinates.get('latitude'), 'lon': coordinates.get('longitude')}
-                }
+            # Agregar todas las medias con coordenadas, independientemente de los umbrales
+            averages_with_coordinates[country] = {
+                'pm10_average': averages['pm10_average'],
+                'pm25_average': averages['pm25_average'],
+                'um100_average': averages['um100_average'],
+                'location': {'lat': coordinates.get('latitude'), 'lon': coordinates.get('longitude')}
+            }
         else:
             print(f'No se encontraron coordenadas para el país {country} en la colección "countries".')
-
+    print(f'Averages with coordinates: {averages_with_coordinates}')
     return averages_with_coordinates
 
 if __name__ == '__main__':
