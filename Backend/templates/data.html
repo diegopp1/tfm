@@ -25,30 +25,40 @@
 
     <div class="section">
         <div class="container">
+            <!-- Barra de búsqueda -->
+            <div class="field is-grouped is-grouped-right mb-4">
+                <p class="control has-icons-left">
+                    <input class="input" type="text" placeholder="Buscar...">
+                    <span class="icon is-left">
+                        <i class="fas fa-search" aria-hidden="true"></i>
+                    </span>
+                </p>
+            </div>
+
+            <!-- Menú desplegable para filtrar por países -->
+            <div class="field is-grouped is-grouped-right mb-4">
+                <p class="control">
+                    <div class="select">
+                        <select>
+                            <option>Todos los países</option>
+                            <!-- Puedes generar opciones dinámicamente aquí con los países disponibles -->
+                            <option>País 1</option>
+                            <option>País 2</option>
+                            <option>País 3</option>
+                        </select>
+                    </div>
+                </p>
+            </div>
+
             <!-- Sección para mostrar datos almacenados -->
             <section id="stored-data" class="mt-5">
                 <h3 class="title is-3">Stored Data</h3>
-                <div>
-                    <!-- Div para contener los botones de selección de país -->
-                    <h4 class="subtitle is-4">Select Country:</h4>
-                    <div class="buttons" id="countryButtons">
-                        <!-- Los botones se agregarán dinámicamente aquí -->
-                    </div>
-                </div>
-                <div class="mt-3">
-                    <!-- Barra de búsqueda -->
-                    <h4 class="subtitle is-4">Search:</h4>
-                    <input class="input" type="text" id="searchInput" placeholder="Type to search...">
-                </div>
                 <ul id="storedDataList">
                     {% for entry in stored_data %}
-                        <li class="data-entry" data-country="{{ entry.country | lower }}">
+                        <li>
+                            <i class="flag-icon flag-icon-{{ entry.country | lower }}"></i>
                             <strong>Location:</strong> {{ entry.name }}<br>
-                            <strong>Country:</strong>
-                            <span class="icon">
-                                <i class="flag-icon flag-icon-{{ getCountryCode(entry.country) | lower }}"></i>
-                            </span>
-                            {{ entry.country }}<br>
+                            <strong>Country:</strong> {{ entry.country }}<br>
                             <strong>Last Updated:</strong> {{ entry.lastUpdated }}<br>
                             <strong>Measurements:</strong><br>
                             <ul>
@@ -66,84 +76,23 @@
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
     <script>
+        // Función para obtener el código de país a partir del nombre del país
+        function getCountryCode(country) {
+            // Puedes implementar lógica adicional aquí para mapear nombres a códigos de país
+            // Por ahora, devuelve el nombre tal cual (en mayúsculas)
+            return country.toUpperCase();
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             const socket = io.connect('http://' + document.domain + ':' + location.port);
             socket.on('connect', function () {
                 console.log('Conectado al servidor SocketIO!')
             });
 
-            // Obtener todos los elementos con la clase "data-entry"
-            const dataEntries = document.querySelectorAll('.data-entry');
-
-            // Obtener el div de botones de país
-            const countryButtonsDiv = document.getElementById('countryButtons');
-
-            // Obtener el input de búsqueda
-            const searchInput = document.getElementById('searchInput');
-
-            // Crear un conjunto para almacenar nombres únicos de países
-            const uniqueCountries = new Set();
-
-            // Iterar sobre los elementos y agregar los nombres de países al conjunto
-            dataEntries.forEach(entry => {
-                uniqueCountries.add(entry.dataset.country);
-            });
-
-            // Crear botones para cada país único
-            uniqueCountries.forEach(country => {
-                const button = document.createElement('button');
-                button.classList.add('button', 'is-link');
-                button.innerHTML = `<span class="icon"><i class="flag-icon flag-icon-${getCountryCode(country) | lower}"></i></span>${country}`;
-                button.addEventListener('click', () => filterDataByCountry(country));
-                countryButtonsDiv.appendChild(button);
-            });
-
-            // Añadir evento de cambio para la búsqueda
-            searchInput.addEventListener('input', handleSearch);
-
-            // Función para filtrar los datos por país
-            function filterDataByCountry(country) {
-                // Ocultar todos los elementos
-                dataEntries.forEach(entry => {
-                    entry.style.display = 'none';
-                });
-
-                // Mostrar solo los elementos del país seleccionado
-                const selectedCountryEntries = document.querySelectorAll(`.data-entry[data-country="${country}"]`);
-                selectedCountryEntries.forEach(entry => {
-                    entry.style.display = 'block';
-                });
-            }
-
-            // Función para manejar la búsqueda
-            function handleSearch() {
-                const searchTerm = searchInput.value.toLowerCase();
-
-                // Ocultar todos los elementos
-                dataEntries.forEach(entry => {
-                    entry.style.display = 'none';
-                });
-
-                // Mostrar solo los elementos que coincidan con la búsqueda
-                dataEntries.forEach(entry => {
-                    const locationName = entry.querySelector('strong').textContent.toLowerCase();
-                    if (locationName.includes(searchTerm)) {
-                        entry.style.display = 'block';
-                    }
-                });
-            }
-
-            // Función para obtener el código de país a partir del nombre del país
-            function getCountryCode(country) {
-                // Puedes implementar lógica adicional aquí para mapear nombres a códigos de país
-                // Por ahora, devuelve el nombre tal cual (en mayúsculas)
-                return country.toUpperCase();
-            }
+            // Puedes agregar lógica adicional aquí si es necesario
         });
     </script>
 </body>
 
 </html>
-
