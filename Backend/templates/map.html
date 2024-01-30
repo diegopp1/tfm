@@ -7,7 +7,6 @@
     <title>World Map - Air Quality</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <style>
         #map-container {
             position: relative;
@@ -15,22 +14,6 @@
 
         #map {
             height: 500px;
-        }
-
-        #legend {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            padding: 10px;
-            background-color: white;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 12px;
-            z-index: 1000;
-        }
-
-        .legend-item {
-            margin-bottom: 5px;
         }
 
         #info {
@@ -50,18 +33,11 @@
 <body>
     <div id="map-container">
         <div id="map"></div>
-        <div id="legend">
-            <h4 style="margin-bottom: 10px;">Healthy Scale</h4>
-            <div class="legend-item" style="background-color: green; color: white; padding: 5px; border-radius: 3px;">Good (Acceptable)</div>
-            <div class="legend-item" style="background-color: yellow; color: white; padding: 5px; border-radius: 3px;">Moderate (Slight concern)</div>
-            <div class="legend-item" style="background-color: red; color: white; padding: 5px; border-radius: 3px;">Unhealthy (Health alert)</div>
-        </div>
         <div id="info"></div>
     </div>
 
     <script>
         var map = L.map('map').setView([0, 0], 2);
-        var heatLayer;
         var data;  // Nueva variable para almacenar los datos
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -71,126 +47,58 @@
         function updateMap() {
             console.log('Data received:', data);
 
-            var heatData = [];
+            for (var country in data) {
+                if (data.hasOwnProperty(country)) {
+                    var countryData = data[country];
+                    if (!countryData.location) continue;
+
+                    var markerColor = getColorForCountry(countryData);
+
+                    var marker = L.circleMarker([countryData.location.lat, countryData.location.lon], {
+                        radius: 5,
+                        color: markerColor,
+                        fillColor: markerColor,
+                        fillOpacity: 1
+                    }).addTo(map);
+
+                    // Añadir evento de información al pasar el ratón sobre el marcador
+                    marker.bindTooltip(getTooltipContent(countryData)).openTooltip();
+                }
+            }
+        }
+
+        function getColorForCountry(countryData) {
             var thresholds = {
                 pm10: 20,
                 pm25: 10,
                 um100: 0.01
             };
 
-            for (var country in data) {
-                if (data.hasOwnProperty(country)) {
-                    var countryData = data[country];
-                    if (!countryData.location) continue;
-
-                    var pm10 = countryData.pm10_average || 0;
-                    var pm25 = countryData.pm25_average || 0;
-                    var um100 = countryData.um100_average || 0;
-
-                    var color = getColorForCountry(pm10, pm25, um100, thresholds);
-                    heatData.push([countryData.location.lat, countryData.location.lon, color]);
-                }
-            }
-
-            if (heatLayer) {
-                map.removeLayer(heatLayer);
-            }
-            heatLayer = L.heatLayer(heatData, { radius: 25 }).addTo(map);
-
-            // Añadir puntos verdes para capitales que no superan el umbral
-            addGreenMarkers();
-        }
-
-        function getColorForCountry(pm10, pm25, um100, thresholds) {
-            if (pm10 > thresholds.pm10 || pm25 > thresholds.pm25 || um100 > thresholds.um100) {
+            if (
+                (countryData.pm10_average || 0) > thresholds.pm10 ||
+                (countryData.pm25_average || 0) > thresholds.pm25 ||
+                (countryData.um100_average || 0) > thresholds.um100
+            ) {
                 return 'red';
-            } else if (pm10 > thresholds.pm10 / 2 || pm25 > thresholds.pm25 / 2 || um100 > thresholds.um100 / 2) {
+            } else if (
+                (countryData.pm10_average || 0) > thresholds.pm10 / 2 ||
+                (countryData.pm25_average || 0) > thresholds.pm25 / 2 ||
+                (countryData.um100_average || 0) > thresholds.um100 / 2
+            ) {
                 return 'yellow';
             } else {
                 return 'green';
             }
         }
 
-        function showInfoOnHover(event) {
-            var infoContainer = document.getElementById('info');
-            infoContainer.innerHTML = '';
-
-            var latlng = event.latlng;
-            var content = '<b>Coordinates:</b> ' + latlng.lat.toFixed(2) + ', ' + latlng.lng.toFixed(2) + '<br>';
-            content += '<b>Averages:</b><br>';
-
-            var countryData = getCountryDataForCoordinates(latlng.lat, latlng.lng);
-            if (countryData) {
-                content += 'PM10: ' + (countryData.pm10_average || 0).toFixed(2) + '<br>';
-                content += 'PM25: ' + (countryData.pm25_average || 0).toFixed(2) + '<br>';
-                content += 'UM100: ' + (countryData.um100_average || 0).toFixed(4) + '<br>';
-            } else {
-                content += 'No data available for this location.';
-            }
-
-            infoContainer.innerHTML = content;
-        }
-
-        function getCountryDataForCoordinates(lat, lon) {
-            for (var country in data) {
-                if (data.hasOwnProperty(country)) {
-                    var countryData = data[country];
-                    var latCountry = countryData.location.lat;
-                    var lonCountry = countryData.location.lon;
-
-                    if (Math.abs(latCountry - lat) < 0.1 && Math.abs(lonCountry - lon) < 0.1) {
-                        return countryData;
-                    }
-                }
-            }
-            return null;
-        }
-
-        function addGreenMarkers() {
-            for (var country in data) {
-                if (data.hasOwnProperty(country)) {
-                    var countryData = data[country];
-
-                    // Solo agregar marcadores verdes si no supera el umbral
-                    if (!exceedsThreshold(countryData)) {
-                        var marker = L.circleMarker([countryData.location.lat, countryData.location.lon], {
-                            radius: 5,
-                            color: 'green',
-                            fillColor: 'green',
-                            fillOpacity: 1
-                        }).addTo(map);
-
-                        // Añadir evento de información al pasar el ratón sobre el marcador
-                        marker.bindTooltip(getTooltipContent(countryData)).openTooltip();
-                    }
-                }
-            }
-        }
-
-        function exceedsThreshold(countryData) {
-            var thresholds = {
-                pm10: 20,
-                pm25: 10,
-                um100: 0.01
-            };
-
-            return (
-                (countryData.pm10_average || 0) > thresholds.pm10 ||
-                (countryData.pm25_average || 0) > thresholds.pm25 ||
-                (countryData.um100_average || 0) > thresholds.um100
-            );
-        }
-
         function getTooltipContent(countryData) {
-            var content = '<b>' + countryData.country + '</b><br>';
+            var content = '<b>' + 'Country Avg' + '</b><br>';
             content += 'PM10: ' + (countryData.pm10_average || 0).toFixed(2) + '<br>';
             content += 'PM25: ' + (countryData.pm25_average || 0).toFixed(2) + '<br>';
             content += 'UM100: ' + (countryData.um100_average || 0).toFixed(4) + '<br>';
 
             return content;
         }
-
-        map.on('mousemove', showInfoOnHover);
 
         function loadData() {
             fetch('/get_map_data')
