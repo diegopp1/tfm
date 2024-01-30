@@ -7,6 +7,14 @@
     <title>IoT App - Data</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css">
+    <style>
+        .legend-container {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            font-size: 12px;
+        }
+    </style>
 </head>
 
 <body>
@@ -25,14 +33,23 @@
 
     <div class="section">
         <div class="container">
-            <!-- Barra de búsqueda -->
-            <div class="field is-grouped is-grouped-right mb-4">
-                <p class="control has-icons-left">
-                    <input id="searchInput" class="input" type="text" placeholder="Buscar..." oninput="performSearch()">
-                    <span class="icon is-left">
-                        <i class="fas fa-search" aria-hidden="true"></i>
-                    </span>
-                </p>
+            <!-- Leyenda de países -->
+            <div class="legend-container">
+                <h3 class="title is-5 mb-2">Legend:</h3>
+                <ul class="country-legend">
+                    <li><i class="flag-icon flag-icon-ar"></i> Argentina (AR)</li>
+                    <li><i class="flag-icon flag-icon-ca"></i> Canada (CA)</li>
+                    <li><i class="flag-icon flag-icon-cl"></i> Chile (CL)</li>
+                    <li><i class="flag-icon flag-icon-de"></i> Germany (DE)</li>
+                    <li><i class="flag-icon flag-icon-fr"></i> France (FR)</li>
+                    <li><i class="flag-icon flag-icon-it"></i> Italy (IT)</li>
+                    <li><i class="flag-icon flag-icon-us"></i> United States (US)</li>
+                    <li><i class="flag-icon flag-icon-es"></i> Spain (ES)</li>
+                    <li><i class="flag-icon flag-icon-pt"></i> Portugal (PT)</li>
+                    <li><i class="flag-icon flag-icon-cn"></i> China (CN)</li>
+                    <li><i class="flag-icon flag-icon-jp"></i> Japan (JP)</li>
+                    <li><i class="flag-icon flag-icon-br"></i> Brazil (BR)</li>
+                </ul>
             </div>
 
             <!-- Dashboard mejorado -->
@@ -40,42 +57,36 @@
                 <strong>Sensors Available:</strong> <span id="documentCount" class="has-text-white">0</span>
             </div>
 
-            <!-- Leyenda de países -->
-            <div class="legend-container">
-                <h3 class="title is-5 mb-2">Legend:</h3>
-                <ul class="country-legend">
-                    <li><i class="flag-icon flag-icon-ar"></i> Argentina</li>
-                    <li><i class="flag-icon flag-icon-ca"></i> Canada</li>
-                    <li><i class="flag-icon flag-icon-cl"></i> Chile</li>
-                    <li><i class="flag-icon flag-icon-de"></i> Germany</li>
-                    <li><i class="flag-icon flag-icon-fr"></i> France</li>
-                    <li><i class="flag-icon flag-icon-it"></i> Italy</li>
-                    <li><i class="flag-icon flag-icon-us"></i> United States</li>
-                    <li><i class="flag-icon flag-icon-es"></i> Spain</li>
-                    <li><i class="flag-icon flag-icon-pt"></i> Portugal</li>
-                    <li><i class="flag-icon flag-icon-cn"></i> China</li>
-                    <li><i class="flag-icon flag-icon-jp"></i> Japan</li>
-                    <li><i class="flag-icon flag-icon-br"></i> Brazil</li>
-                </ul>
+            <!-- Barra de búsqueda -->
+            <div class="field is-grouped is-grouped-right mb-4">
+                <p class="control has-icons-left">
+                    <input class="input" type="text" id="searchInput" placeholder="Search by country...">
+                    <span class="icon is-left">
+                        <i class="fas fa-search" aria-hidden="true"></i>
+                    </span>
+                </p>
+                <p class="control">
+                    <button class="button is-info" onclick="performSearch()">Search</button>
+                </p>
             </div>
 
             <!-- Sección para mostrar datos almacenados -->
             <section id="stored-data" class="mt-5">
                 <h3 class="title is-3">Stored Data</h3>
                 <ul id="storedDataList">
-                    <!-- Los datos se actualizarán dinámicamente aquí -->
+                    <!-- Datos se cargarán dinámicamente aquí -->
                 </ul>
             </section>
         </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Puedes agregar lógica adicional aquí si es necesario
-            performSearch(); // Realizar la primera búsqueda al cargar la página
-        });
+        // Función para obtener el código de país a partir del nombre del país
+        function getCountryCode(country) {
+            return country.toUpperCase();
+        }
 
-        // Función para realizar la búsqueda y actualizar la página
+        // Función para realizar la búsqueda
         function performSearch() {
             var searchInput = document.getElementById('searchInput').value;
 
@@ -86,9 +97,14 @@
                 },
                 body: JSON.stringify({ searchInput: searchInput }),
             })
-                .then(response => response.json())
-                .then(data => updateStoredDataList(data))
-                .catch(error => console.error('Error performing search:', error));
+            .then(response => response.json())
+            .then(data => {
+                updateStoredDataList(data);
+                updateDocumentCount(data.length);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
         }
 
         // Función para actualizar la lista de datos almacenados
@@ -99,14 +115,13 @@
             data.forEach(entry => {
                 var listItem = document.createElement('li');
                 listItem.innerHTML = `
-                    <i class="flag-icon flag-icon-${entry.country.toLowerCase()}"></i>
+                    <i class="flag-icon flag-icon-${getCountryCode(entry.country).toLowerCase()}"></i>
                     <strong>Location:</strong> ${entry.name}<br>
                     <strong>Country:</strong> ${entry.country}<br>
                     <strong>Last Updated:</strong> ${entry.lastUpdated}<br>
                     <strong>Measurements:</strong><br>
                     <ul>
-                        ${entry.parameters ? entry.parameters.map(parameter =>
-                            `<li>${parameter.parameter}: ${parameter.lastValue} ${parameter.unit}</li>`).join('') : ''}
+                        ${entry.parameters ? entry.parameters.map(parameter => `<li>${parameter.parameter}: ${parameter.lastValue} ${parameter.unit}</li>`).join('') : ''}
                     </ul>
                     <hr>
                 `;
@@ -119,7 +134,15 @@
             var documentCount = document.getElementById('documentCount');
             documentCount.textContent = count;
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const socket = io.connect('http://' + document.domain + ':' + location.port);
+            socket.on('connect', function () {
+                console.log('Conectado al servidor SocketIO!')
+            });
+        });
     </script>
 </body>
 
 </html>
+
