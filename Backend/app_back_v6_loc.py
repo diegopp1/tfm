@@ -6,7 +6,7 @@ import json
 import logging
 import subprocess
 from decouple import config
-import plotly.express as px
+from bson import json_util
 from statistics import mean
 
 app = Flask(__name__)
@@ -203,6 +203,9 @@ def perform_search():
 
     # Realiza la búsqueda en la base de datos según el campo 'country'
     filtered_data = list(mongo_locations_collection.find({'country': search_input}))
+
+    # Convertir ObjectId a cadena antes de serializar a JSON
+    filtered_data = json.loads(json_util.dumps(filtered_data))
 
     return jsonify(filtered_data)
 def handle_devices(data):
