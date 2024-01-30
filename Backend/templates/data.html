@@ -26,6 +26,11 @@
 
     <div class="section">
         <div class="container">
+            <!-- Leyenda de códigos de país -->
+            <div class="notification is-primary">
+                Countries: AR, CA, CL, DE, FR, IT, US, ES, PT, CN, JP, BR
+            </div>
+
             <!-- Barra de búsqueda -->
             <div class="field is-grouped is-grouped-right mb-4">
                 <p class="control has-icons-left">
@@ -39,9 +44,12 @@
                 </p>
             </div>
 
-            <!-- Sección para mostrar datos almacenados -->
+            <!-- Cuenta de sensores para el país -->
+            <h3 class="title is-3" id="sensorCount"></h3>
+
+            <!-- Sección para mostrar datos almacenados y cuenta de sensores encontrados -->
             <section id="stored-data" class="mt-5">
-                <h3 class="title is-3">Stored Data</h3>
+                <div class="notification is-success" id="documentCount"></div>
                 <ul id="storedDataList">
                     <!-- Datos se cargarán dinámicamente aquí -->
                 </ul>
@@ -70,6 +78,7 @@
             .then(data => {
                 updateStoredDataList(data);
                 updateDocumentCount(data.length);
+                updateSensorsFoundCount(data.length);
             })
             .catch((error) => {
                 console.error('Error:', error);
@@ -101,7 +110,7 @@
         // Función para actualizar el conteo de documentos
         function updateDocumentCount(count) {
             var documentCount = document.getElementById('documentCount');
-            documentCount.textContent = count;
+            documentCount.textContent = `SENSORS FOUND: ${count}`;
         }
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -114,4 +123,6 @@
 </body>
 
 </html>
+
+
 
