@@ -18,25 +18,47 @@ except Exception as e:
 mongo_db = mongo_client['iot_data']
 mongo_data_2019_collection = mongo_db['data_2019']
 
-# URL de la API de OpenAQ para obtener datos de calidad del aire por país y fecha
-openaq_data_url = "https://api.openaq.org/v2/measurements?date_from=2019-12-31T00%3A00%3A00&date_to=2019-12-31T23%3A59%3A00&limit=100&page=1&offset=0&sort=desc&parameter=pm25&parameter=pm10&parameter=um100&radius=1000&country=AR&country=CA&country=CL&country=DE&country=FR&country=IT&country=US&country=ES&country=PT&country=CN&country=JP&country=BR&country=RU&country=IN&country=AU&country=ZA&order_by=datetime"
+# URL base de la API de OpenAQ para obtener datos de calidad del aire
+openaq_base_url = "https://api.openaq.org/v2/measurements"
 
-def fetch_and_store_openaq_data():
+# Umbrales específicos
+thresholds = {
+    'pm10': 100,
+    'pm25': 400,
+    'um100': 0.03
+}
+
+# Rango de fechas
+date_from = '2019-01-01T00:00:00'
+date_to = '2019-12-31T23:59:00'
+
+# Países de interés
+countries = ['AR', 'CA', 'CL', 'DE', 'FR', 'IT', 'US', 'ES', 'PT', 'CN', 'JP', 'BR', 'RU', 'IN', 'AU', 'ZA']
+
+# Iterar sobre los umbrales y realizar solicitudes para cada uno
+for param, threshold in thresholds.items():
+    params = {
+        'date_from': date_from,
+        'date_to': date_to,
+        'limit': 10,  # Aumenta el límite para obtener más datos
+        'page': 1,
+        'offset': 0,
+        'sort': 'desc',
+        'parameter': param,
+        'radius': 1000,
+        'country': countries,
+        'value_from': threshold,
+        'order_by': 'datetime'
+    }
     try:
-        response = requests.get(openaq_data_url)
+        response = requests.get(openaq_base_url, params=params)
 
         if response.status_code == 200:
             openaq_data = response.json()['results']
             # Almacena los datos en la colección de MongoDB
             mongo_data_2019_collection.insert_many(openaq_data)
-            print("Datos almacenados en la colección 'data_2019'")
-            return True
+            print(f"Datos almacenados en la colección 'data_2019' para el parámetro {param} y umbral {threshold}")
         else:
             print(f"Error al obtener datos de calidad del aire de OpenAQ. Código de estado: {response.status_code}")
-            return False
     except Exception as e:
         print(f"Error en la solicitud a la API de OpenAQ: {e}")
-        return False
-
-if __name__ == '__main__':
-    fetch_and_store_openaq_data()
