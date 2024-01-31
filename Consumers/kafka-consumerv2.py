@@ -1,5 +1,4 @@
-from confluent_kafka import Consumer, KafkaError
-import json
+from confluent_kafka import Consumer, KafkaException
 import logging
 
 # Configuración de logs
@@ -8,44 +7,38 @@ logger = logging.getLogger('consumer')
 
 # Configuración del consumidor de Kafka
 conf = {
-    'bootstrap.servers': 'localhost:9092',  # Cambia esto según la configuración de tu clúster Kafka
-    'group.id': 'my_consumer_group',
-    'auto.offset.reset': 'earliest'
+    'bootstrap.servers': 'localhost:9092',
+    'group.id': 'openaq_consumer_group',
+    'auto.offset.reset': 'earliest',
 }
-topic = 'datos'  # Cambia esto según el nombre del tema que creaste en el clúster Kafka
 
-# Crear un consumidor
 consumer = Consumer(conf)
 
-# Suscribirse a un tema
-consumer.subscribe([topic])
+# Suscribirse al tema
+topics = ['openaq_data']
+consumer.subscribe(topics)
 
+# Bucle principal para consumir mensajes
 try:
     while True:
-        # Esperar mensajes
-        msg = consumer.poll(1.0)
+        msg = consumer.poll(timeout=1000)
 
         if msg is None:
             continue
         if msg.error():
-            if msg.error().code() == KafkaError._PARTITION_EOF:
-                # No se encontraron nuevos mensajes
+            if msg.error().code() == KafkaException._PARTITION_EOF:
+                # Fin de la partición, no es un error
                 continue
             else:
                 logger.error(msg.error())
                 break
 
-        # Decodificar y procesar el mensaje JSON
-        try:
-            data = json.loads(msg.value().decode('utf-8'))
-            logger.info("Datos recibidos: {}".format(data))
-        except Exception as e:
-            logger.error(f"Error al procesar mensaje: {e}")
+        # Registro del mensaje recibido
+        logger.info('Mensaje recibido: {}'.format(msg.value().decode('utf-8')))
 
 except KeyboardInterrupt:
-    pass  # Manejar la interrupción del teclado (Ctrl+C)
+    pass
 
 finally:
     # Cerrar el consumidor
     consumer.close()
-
