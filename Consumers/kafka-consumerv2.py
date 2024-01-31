@@ -1,5 +1,5 @@
-from confluent_kafka import Consumer, KafkaException
 import logging
+from confluent_kafka import Consumer, KafkaException
 
 # Configuración de logs
 logging.basicConfig(level=logging.INFO)
@@ -14,19 +14,19 @@ conf = {
 
 consumer = Consumer(conf)
 
-# Suscribirse al tema
-topics = ['openaq_data']
-consumer.subscribe(topics)
+# Suscribirse al tema 'data-2019'
+topic_name = 'data-2019'
+consumer.subscribe([topic_name])
 
 # Bucle principal para consumir mensajes
 try:
     while True:
-        msg = consumer.poll(timeout=1000)
+        msg = consumer.poll(1.0)
 
         if msg is None:
             continue
         if msg.error():
-            if msg.error().code() == KafkaException._PARTITION_EOF:
+            if msg.error().code() == KafkaException.PARTITION_EOF:
                 # Fin de la partición, no es un error
                 continue
             else:
