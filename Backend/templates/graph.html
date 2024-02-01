@@ -113,33 +113,29 @@
                 .then(response => response.json())
                 .then(data => {
                     console.log('Graph data:', data);
-                    // Verificar si el eje X es 'country' y ajustar el formato de los datos
-                    // Verificar si el eje X es 'country' y ajustar el formato de los datos
-                    // Verificar si el eje X es 'country' y ajustar el formato de los datos
-                  if (xAxisField === 'country') {
-                        // Sólo muestrame los datos calculados
-                        const xValues = Object.keys(data);
-                        const paramName = yAxisField.match(/\(([^)]+)\)/)[1]; // Extraer el parámetro entre paréntesis
-                        const yValues = Object.values(data).map(countryData => countryData[paramName + '_average']);
 
-                        // Mostrar la información de manera legible en una tabla
-                        const resultTable = `
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>${xAxisField}</th>
-                                        <th>${paramName}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${xValues.map((country, index) => `<tr><td>${country}</td><td>${yValues[index] !== undefined ? yValues[index].toFixed(2) : 'N/A'}</td></tr>`).join('')}
-                                </tbody>
-                            </table>
-                        `;
+                if (xAxisField === 'country'){
+                    const xValues = Object.keys(data);
+                    const paramName = yAxisField.match(/\(([^)]+)\)/)[1]; // Extraer el parámetro entre paréntesis
+                    const yValues = Object.values(data).map(countryData => countryData[paramName + '_average']);
 
-                        // Insertar la tabla en el contenedor
-                        graphContainer.innerHTML = resultTable;
+                    // Crear un gráfico de barras
+                    const trace = {
+                        x: xValues,
+                        y: yValues,
+                        type: 'bar',
+                        marker: {
+                            color: 'rgb(0, 128, 255)' // Puedes ajustar el color según tus preferencias
+                        }
+                    };
 
+                    const layout = {
+                        title: `Bar Chart: ${paramName} Average by Country`,
+                        xaxis: { title: xAxisField },
+                        yaxis: { title: paramName },
+                    };
+
+                    Plotly.newPlot(graphContainer, [trace], layout);
 
                     } else {
                         // Resto del código para 'name' (sin cambios)
