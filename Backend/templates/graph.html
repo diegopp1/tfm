@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IoT App - Graphs</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css">
     <!-- Incluye la biblioteca de Plotly -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
@@ -131,8 +132,8 @@
 
                     const layout = {
                         title: `Bar Chart: ${paramName} Average by Country`,
-                        xaxis: { title: xAxisField },
-                        yaxis: { title: paramName },
+                        xaxis: { title: 'Country' },
+                        yaxis: { title: paramName + ' Average' },
                     };
 
                     Plotly.newPlot(graphContainer, [trace], layout);
@@ -146,7 +147,10 @@
                             x: xValues,
                             y: yValues,
                             mode: 'markers',
-                            type: 'scatter'
+                            type: 'scatter',
+                            marker: {
+                                color: 'rgb(0, 128, 255)' // Puedes ajustar el color según tus preferencias
+                            }
                         };
 
                         const layout = {
