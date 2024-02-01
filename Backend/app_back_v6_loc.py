@@ -94,14 +94,17 @@ def generate_filtered_data(data):
     }
 
 def background_thread():
-    while True:
-        data = consume_message()
-        if data is not None:
-            if '_id' in data:
-                data['_id'] = str(data['_id'])
-            socketio.emit('air_quality_data', data)
-            handle_devices(data)
-            socketio.sleep(1)
+    try:
+        while True:
+            data = consume_message()
+            if data is not None:
+                if '_id' in data:
+                    data['_id'] = str(data['_id'])
+                socketio.emit('air_quality_data', data)
+                handle_devices(data)
+                socketio.sleep(1)
+    except Exception as e:
+        logger.error(f"Error en el hilo principal: {e}")
 
 def get_available_fields():
     # Devolver las opciones específicas para los ejes X e Y
@@ -174,13 +177,6 @@ def generate_data():
     selected_country = request.form.get('country')
     start_second_producer(selected_country)
     print ('Conectado')
-    openaq_data_loc = consume_message()
-    if openaq_data_loc is not None:
-        for entry in openaq_data_loc:
-            if '_id' in entry:
-                entry['_id'] = str(entry['_id'])
-        handle_devices(entry)
-        print("Datos de calidad del aire insertados en MongoDB.")
     return 'Generating data...'
 @app.route('/worldmap')
 def world_map():
@@ -350,6 +346,6 @@ def get_averages_with_coordinates(collection):
     return averages_with_coordinates
 
 if __name__ == '__main__':
-    socketio.start_background_task(target=background_thread)
+    socketio.start_background_task(target=background_thread) # Iniciar el hilo de fondo para consumir datos de Kafka
     socketio.run(app, debug=True, allow_unsafe_werkzeug=True, use_reloader=False)
 
