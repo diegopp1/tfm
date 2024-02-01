@@ -115,33 +115,45 @@
                 .then(data => {
                     console.log('Graph data:', data);
 
-                if (xAxisField === 'country'){
-                    const xValues = Object.keys(data);
-                    const paramName = yAxisField.match(/\(([^)]+)\)/)[1]; // Extraer el parámetro entre paréntesis
-                    const yValues = Object.values(data).map(countryData => countryData[paramName + '_average']);
+                    if (xAxisField === 'country') {
+                        const xValues = Object.keys(data);
+                        const paramName = yAxisField.match(/\(([^)]+)\)/)[1]; // Extraer el parámetro entre paréntesis
+                        const yValues = Object.values(data).map(countryData => countryData[paramName + '_average']);
 
-                    // Crear un gráfico de barras
-                    const trace = {
-                        x: xValues,
-                        y: yValues,
-                        type: 'bar',
-                        marker: {
-                            color: 'rgb(0, 128, 255)' // Puedes ajustar el color según tus preferencias
-                        }
-                    };
+                        const thresholds = {
+                            pm10: 20,
+                            pm25: 10,
+                            um100: 0.01
+                        };
 
-                    const layout = {
-                        title: `Bar Chart: ${paramName} Average by Country`,
-                        xaxis: { title: 'Country' },
-                        yaxis: { title: paramName + ' Average' },
-                    };
+                        // Crear un gráfico de barras
+                        const trace = {
+                            x: xValues,
+                            y: yValues,
+                            type: 'bar',
+                            marker: {
+                                color: yValues.map(value => value > thresholds[paramName] ? 'red' : 'blue')
+                            }
+                        };
+                        console.log('Trace:', trace);
+                        const layout = {
+                            title: `Bar Chart: ${paramName} Average by Country`,
+                            xaxis: { title: 'Country' },
+                            yaxis: { title: paramName + ' Average' },
+                        };
 
-                    Plotly.newPlot(graphContainer, [trace], layout);
+                        Plotly.newPlot(graphContainer, [trace], layout);
 
                     } else {
                         // Resto del código para 'name' (sin cambios)
                         const xValues = Array.isArray(data) ? data.map(entry => entry[xAxisField]) : [data[xAxisField]];
                         const yValues = Array.isArray(data) ? data.map(entry => entry[yAxisField]) : [data[yAxisField]];
+                        const paramName = yAxisField.match(/\(([^)]+)\)/)[1]; // Extraer el parámetro entre paréntesis
+                        const thresholds = {
+                            pm10: 20,
+                            pm25: 10,
+                            um100: 0.01
+                        };
 
                         const trace = {
                             x: xValues,
@@ -149,7 +161,7 @@
                             mode: 'markers',
                             type: 'scatter',
                             marker: {
-                                color: 'rgb(0, 128, 255)' // Puedes ajustar el color según tus preferencias
+                                color: yValues.map(value => value > thresholds[paramName] ? 'red' : 'blue')
                             }
                         };
 
@@ -171,5 +183,4 @@
 </body>
 
 </html>
-
 
