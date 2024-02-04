@@ -16,4 +16,5 @@ COPY . .
 EXPOSE 5000
 
 # Comando para ejecutar la aplicación cuando el contenedor se inicie
-CMD ["python", "Backend/app_back_v6_loc.py"]
+CMD ["sh", "-c", "python Backend/app_back_v6_loc.py"]
+
