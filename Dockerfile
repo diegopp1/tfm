@@ -17,5 +17,5 @@ RUN pip install -r requirements.txt
 COPY . .
 
 # Especifica el comando por defecto a ejecutar cuando se inicia el contenedor
-CMD ["python", "tu_script_principal.py"]
+CMD ["python", "app_back_v6_loc.py"]
 
