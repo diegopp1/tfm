@@ -1,20 +1,21 @@
-# Usa una imagen base con Python
+# Usa una imagen de Python 3.10
 FROM python:3.10.13-slim
 
 # Establece el directorio de trabajo en /app
 WORKDIR /app
 
-# Copia el archivo requirements.txt al contenedor
+# Copia el archivo requirements.txt al contenedor en /app
 COPY requirements.txt .
 
-# Instala las dependencias de la aplicación
-RUN pip install --no-cache-dir -r requirements.txt
+# Instala el paquete Brotli directamente
+RUN apt-get update && apt-get install -y libbrotli1 libbrotli-dev
 
+# Instala las dependencias especificadas en requirements.txt
+RUN pip install -r requirements.txt
+
+# Copia el resto de la aplicación al contenedor en /app
 COPY . .
 
-# Expone el puerto 5000 para que la aplicación Flask pueda ser accedida externamente
-EXPOSE 5000
-
-# Comando para ejecutar la aplicación cuando el contenedor se inicie
-CMD ["sh", "-c", "python Backend/app_back_v6_loc.py"]
+# Especifica el comando por defecto a ejecutar cuando se inicia el contenedor
+CMD ["python", "tu_script_principal.py"]
 
