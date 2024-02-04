@@ -1,5 +1,5 @@
 # Usa una imagen de Python 3.10
-FROM python:3.10.13-slim
+FROM python:3.10.13-alpine
 
 # Establece el directorio de trabajo en /app
 WORKDIR /app
@@ -8,7 +8,7 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Instala el paquete Brotli directamente
-RUN apt-get update && apt-get install -y libbrotli1 libbrotli-dev
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Instala las dependencias especificadas en requirements.txt
 RUN pip install -r requirements.txt
