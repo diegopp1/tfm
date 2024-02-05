@@ -7,6 +7,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Sensors</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+    <style>
+        .sensor-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .sensor-details {
+            flex: 1;
+        }
+
+        .remove-button {
+            margin-left: 10px;
+        }
+    </style>
 </head>
 
 <body>
@@ -39,12 +57,17 @@
 
             data.forEach(sensor => {
                 var listItem = document.createElement('li');
+                listItem.classList.add('sensor-item');
+
                 listItem.innerHTML = `
-                    <strong>ID:</strong> ${sensor._id}<br>
-                    <strong>Location:</strong> ${sensor.location}<br>
-                    <strong>Country:</strong> ${sensor.country}<br>
-                    <button class="button is-danger" onclick="removeSensor('${sensor._id}')">Remove</button>
-                    <hr>
+                    <div class="sensor-details">
+                        <strong>ID:</strong> ${sensor._id}<br>
+                        <strong>Location:</strong> ${sensor.location}<br>
+                        <strong>Country:</strong> ${sensor.country}<br>
+                    </div>
+                    <div class="remove-button">
+                        <button class="button is-danger" onclick="removeSensor('${sensor._id}')">Remove</button>
+                    </div>
                 `;
                 mySensorsList.appendChild(listItem);
             });
@@ -52,7 +75,6 @@
 
         // Función para eliminar un sensor
         function removeSensor(sensorId) {
-            // Enviar solicitud para eliminar el sensor
             fetch('/remove_sensor', {
                 method: 'POST',
                 headers: {
@@ -62,34 +84,16 @@
             })
             .then(response => response.json())
             .then(data => {
-                // Manejar la respuesta según sea necesario
                 console.log(data);
-                // Actualizar la lista después de la eliminación
-                fetch('/my_sensors')
-                    .then(response => response.json())
-                    .then(data => {
-                        updateMySensorsList(data);
-                    })
-                    .catch((error) => {
-                        console.error('Error:', error);
-                    });
+                // Recargar la página después de la eliminación
+                window.location.reload();
             })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
+            .catch(error => console.error('Error:', error));
         }
 
         // Obtener la lista de sensores al cargar la página
-        fetch('/my_sensors')
-            .then(response => response.json())
-            .then(data => {
-                updateMySensorsList(data);
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
+        updateMySensorsList(JSON.parse('{{ sensors_list | tojson | safe }}'));
     </script>
 </body>
 
 </html>
-
