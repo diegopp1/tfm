@@ -8,6 +8,7 @@ import subprocess
 from decouple import config
 from bson import json_util
 from statistics import mean
+import os
 
 app = Flask(__name__)
 socketio = SocketIO(app, threaded=True)
@@ -37,7 +38,7 @@ mongo_locations_collection = mongo_db['locations']
 mongo_countries_collection = mongo_db['countries']
 # Crear el consumidor de Kafka
 consumer = Consumer({
-    'bootstrap.servers': 'localhost:9092',
+    'bootstrap.servers': 'broker:9092',
     'group.id': 'my_consumer_group',
     'auto.offset.reset': 'latest'
 })
@@ -243,9 +244,13 @@ def handle_connect():
 def handle_disconnect():
     print('Cliente desconectado')
 
+def get_project_root() -> str:
+    """Obtiene la ruta al directorio principal del proyecto."""
+    return os.path.dirname(os.path.abspath(__file__))
+
 def start_producer():
     if not is_producer_running():
-        script_path = 'C:\\Users\\Usuario\\PycharmProjects\\pythonProject2\\Producer (OpenAQ)\\kafka-producerv3.py'
+        script_path = '/app/Producer (OpenAQ)/kafka-producerv3.py'
         subprocess.Popen(['python', script_path])
         print("Productor de Kafka iniciado.")
     else:
@@ -253,7 +258,7 @@ def start_producer():
 
 def start_second_producer(country):
     if not is_second_producer_running():
-        script_path = 'C:\\Users\\Usuario\\PycharmProjects\\pythonProject2\\Producer (OpenAQ)\\kafka-producer-loc.py'
+        script_path = '/app/Producer (OpenAQ)/kafka-producer-loc.py'
         subprocess.Popen(['python', script_path, country])
         print("Segundo productor de Kafka iniciado.")
     else:
