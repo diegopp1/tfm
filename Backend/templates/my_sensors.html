@@ -6,8 +6,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Sensors</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
     <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            color: #000;
+        }
+
+        header {
+            background-color: #7fff7f;
+            padding: 1em;
+            text-align: center;
+            color: #000;
+        }
+
+        nav {
+            background-color: #a9ffa9;
+            padding: 0.5em;
+            text-align: center;
+        }
+
+        nav a {
+            color: #000;
+            text-decoration: none;
+            padding: 1em;
+            margin: 0 0.5em;
+            display: inline-block;
+            border: 1px solid #000;
+            border-radius: 5px;
+            font-weight: bold; /* Añadir negrita */
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 2em auto;
+            padding: 1em;
+            background-color: #d9ffd9;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
         .sensor-item {
             display: flex;
             justify-content: space-between;
@@ -28,6 +69,19 @@
 </head>
 
 <body>
+    <header>
+        <h1>AIR QUALITY APP</h1>
+    </header>
+
+    <!-- Menú de navegación -->
+    <nav>
+        <a href="/locations">Generate Data</a>
+        <a href="/graph">Graph</a>
+        <a href="/worldmap">World Map</a>
+        <a href="/data">Stored Data</a>
+        <a href="/my_sensors">My Sensors</a>
+    </nav>
+
     <section class="hero is-primary">
         <div class="hero-body">
             <div class="container">
