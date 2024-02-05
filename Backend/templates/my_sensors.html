@@ -43,16 +43,53 @@
                     <strong>ID:</strong> ${sensor._id}<br>
                     <strong>Location:</strong> ${sensor.location}<br>
                     <strong>Country:</strong> ${sensor.country}<br>
+                    <button class="button is-danger" onclick="removeSensor('${sensor._id}')">Remove</button>
                     <hr>
                 `;
                 mySensorsList.appendChild(listItem);
             });
         }
 
-        // Obtener la lista de sensores al cargar la página
-        updateMySensorsList(JSON.parse('{{ sensors_list | tojson | safe }}'));
+        // Función para eliminar un sensor
+        function removeSensor(sensorId) {
+            // Enviar solicitud para eliminar el sensor
+            fetch('/remove_sensor', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ sensorId }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Manejar la respuesta según sea necesario
+                console.log(data);
+                // Actualizar la lista después de la eliminación
+                fetch('/my_sensors')
+                    .then(response => response.json())
+                    .then(data => {
+                        updateMySensorsList(data);
+                    })
+                    .catch((error) => {
+                        console.error('Error:', error);
+                    });
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
 
+        // Obtener la lista de sensores al cargar la página
+        fetch('/my_sensors')
+            .then(response => response.json())
+            .then(data => {
+                updateMySensorsList(data);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
     </script>
 </body>
 
 </html>
+

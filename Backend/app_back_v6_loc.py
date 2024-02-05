@@ -245,6 +245,20 @@ def my_sensors():
     sensors_list = list(mongo_sensors_collection.find())
     return render_template('my_sensors.html', sensors_list=sensors_list)
 
+@app.route('/remove_sensor', methods=['POST'])
+def remove_sensor():
+    try:
+        sensor_data = request.json
+        sensor_id = sensor_data.get('sensorId')
+
+        # Eliminar el sensor de la lista
+        mongo_sensors_collection.delete_one({'_id': sensor_id})
+
+        return jsonify({'message': 'Sensor eliminado correctamente.'}), 200
+    except Exception as e:
+        print(f"Error al eliminar el sensor: {e}")
+        return jsonify({'error': 'Error interno del servidor.'}), 500
+
 def handle_devices(data):
     id = data.get('id')
     country = data.get('country')
