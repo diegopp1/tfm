@@ -24,6 +24,10 @@
             color: #000;
         }
 
+        .hero-title {
+            font-weight: bold; /* Hacemos el título en negrita */
+        }
+
         nav {
             background-color: #a9ffa9;
             padding: 0.5em;
@@ -48,7 +52,21 @@
             background-color: #d9ffd9;
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
+            text-align: left;
+        }
+
+        .sensor-box {
+            position: relative;
+            border-bottom: 2px solid #000; /* Agregamos un borde negro entre sensores */
+            padding-bottom: 10px; /* Ajustamos el espacio para que se vea el borde */
+            margin-bottom: 20px; /* Ajustamos el espacio entre sensores */
+        }
+
+        .sensor-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            right: 10px; /* Puedes ajustar el valor según sea necesario */
         }
     </style>
 </head>
@@ -134,19 +152,23 @@
             var storedDataList = document.getElementById('storedDataList');
             storedDataList.innerHTML = '';
 
+            // Ordenar por lastUpdated
+            data.sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated));
+
             data.forEach(entry => {
                 var listItem = document.createElement('li');
                 listItem.innerHTML = `
-                    <i class="flag-icon flag-icon-${getCountryCode(entry.country).toLowerCase()}"></i>
-                    <strong>Location:</strong> ${entry.name}<br>
-                    <strong>Country:</strong> ${entry.country}<br>
-                    <strong>Last Updated:</strong> ${entry.lastUpdated}<br>
-                    <strong>Measurements:</strong><br>
-                    <ul>
-                        ${entry.parameters ? entry.parameters.map(parameter => `<li>${parameter.parameter}: ${parameter.lastValue} ${parameter.unit}</li>`).join('') : ''}
-                    </ul>
-                    <button class="button is-primary" onclick="addSensorToList('${entry.id}', '${entry.name}', '${entry.country}')">Add to 'My Sensors'</button>
-                    <hr>
+                    <div class="sensor-box">
+                        <i class="flag-icon flag-icon-${getCountryCode(entry.country).toLowerCase()}"></i>
+                        <strong>Location:</strong> ${entry.name}<br>
+                        <strong>Country:</strong> ${entry.country}<br>
+                        <strong>Last Updated:</strong> ${new Date(entry.lastUpdated).toLocaleString()}<br>
+                        <strong>Measurements:</strong><br>
+                        <ul>
+                            ${entry.parameters ? entry.parameters.map(parameter => `<li>${parameter.parameter}: ${parameter.lastValue} ${parameter.unit}</li>`).join('') : ''}
+                        </ul>
+                        <button class="button is-primary sensor-button" onclick="addSensorToList('${entry.id}', '${entry.name}', '${entry.country}')">Add to 'My Sensors'</button>
+                    </div>
                 `;
                 storedDataList.appendChild(listItem);
             });
