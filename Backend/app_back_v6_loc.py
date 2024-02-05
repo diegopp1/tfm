@@ -40,7 +40,7 @@ mongo_countries_collection = mongo_db['countries']
 consumer = Consumer({
     'bootstrap.servers': 'broker:29092',
     'group.id': 'my_consumer_group',
-    'auto.offset.reset': 'latest'
+    'auto.offset.reset': 'earliest'
 })
 
 try:
@@ -174,11 +174,16 @@ def locations():
 
 @app.route('/generate', methods=['POST'])
 def generate_data():
-    global selected_country
-    selected_country = request.form.get('country')
-    start_second_producer(selected_country)
-    print ('Conectado')
-    return 'Generating data...'
+    try:
+        global selected_country
+        selected_country = request.form.get('country')
+        start_second_producer(selected_country)
+        print('Conectado')
+        return 'Generating data...'
+    except Exception as e:
+        # Manejar la excepción aquí, puedes registrarla o hacer algo más según tus necesidades
+        print(f"Error en la ruta '/generate': {e}")
+        return jsonify({'error': 'Se produjo un error al procesar la solicitud'})
 @app.route('/worldmap')
 def world_map():
     return render_template('map.html')
@@ -352,4 +357,4 @@ def get_averages_with_coordinates(collection):
 
 if __name__ == '__main__':
     socketio.start_background_task(target=background_thread) # Iniciar el hilo de fondo para consumir datos de Kafka
-    socketio.run(app,  host='0.0.0.0', port=5000, debug=False, allow_unsafe_werkzeug=True, use_reloader=False)
+    socketio.run(app,  host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True, use_reloader=False)

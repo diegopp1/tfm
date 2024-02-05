@@ -10,7 +10,7 @@ logger = logging.getLogger('producer')
 
 # Configuración del productor de Kafka
 conf = {
-    'bootstrap.servers': 'brokeR:29092',  # Cambia esto según la configuración de tu clúster Kafka
+    'bootstrap.servers': 'broker:29092',  # Cambia esto según la configuración de tu clúster Kafka
 }
 
 # Crear un productor

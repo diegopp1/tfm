@@ -31,7 +31,11 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0 # Group leader does not spend time to rebalance
       KAFKA_DELETE_TOPIC_ENABLE: "true"
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-
+    command: >
+      bash -c "/etc/confluent/docker/run &&
+      kafka-topics --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 2 --topic locations &&
+      kafka-topics --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 2 --topic datos
+      "
   # Kafka Manager GUI to configure Kafka
   kafka_manager:
     image: deltaprojects/kafka-manager:v3.0.0.6-2
@@ -68,6 +72,7 @@ services:
       - "5000:5000"
     depends_on:
       - broker
+
 
 networks:
   default:
