@@ -5,45 +5,85 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IoT App - Graphs</title>
+    <style>
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            color: #000;
+        }
+
+        header {
+            background-color: #7fff7f;
+            padding: 1em;
+            text-align: center;
+            color: #000;
+            font-weight: bold;
+        }
+
+        nav {
+            background-color: #a9ffa9;
+            padding: 0.5em;
+            text-align: center;
+        }
+
+        nav a {
+            color: #000;
+            text-decoration: none;
+            padding: 1em;
+            margin: 0 0.5em;
+            display: inline-block;
+            border: 1px solid #000;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 2em auto;
+            padding: 1em;
+            background-color: #d9ffd9;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+    </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css">
-    <!-- Incluye la biblioteca de Plotly -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 
 <body>
-    <section class="hero is-primary">
-        <div class="hero-body">
-            <div class="container">
-                <h1 class="title">
-                    IoT Data Dashboard - Graphs
-                </h1>
-                <h2 class="subtitle">
-                    Generate Custom Graphs
-                </h2>
-            </div>
-        </div>
-    </section>
+    <header>
+        <h1 class="hero-title">AIR QUALITY APP</h1>
+    </header>
+
+    <!-- Menú de navegación -->
+    <nav>
+        <a href="/locations">Generate Data</a>
+        <a href="/graph">Graph</a>
+        <a href="/worldmap">World Map</a>
+        <a href="/data">Stored Data</a>
+        <a href="/my_sensors">My Sensors</a>
+    </nav>
 
     <div class="section">
         <div class="container">
-            <!-- Sección para seleccionar campos y mostrar la gráfica -->
             <section id="graph-section" class="mt-5">
-                 <div class="notification is-danger">
+                <div class="notification is-danger">
                     <p class="subtitle is-6 has-text-weight-bold">
                         Values displayed in red on the graphs indicate levels that are considered unhealthy for the population
                     </p>
                 </div>
                 <h3 class="title is-3">Generate Graph</h3>
-                <!-- Formulario para seleccionar campos -->
                 <form id="graph-form">
                     <div class="field">
                         <label class="label">Select X-axis Field:</label>
                         <div class="control">
-                            <!-- Dropdown para seleccionar el campo del eje X -->
                             <div class="select">
                                 <select id="x-axis-field" name="x-axis-field">
-                                    <!-- Opciones específicas -->
                                     <option value="name">Name</option>
                                     <option value="country">Country</option>
                                 </select>
@@ -54,10 +94,8 @@
                     <div class="field">
                         <label class="label">Select Y-axis Field:</label>
                         <div class="control">
-                            <!-- Dropdown para seleccionar el campo del eje Y -->
                             <div class="select">
                                 <select id="y-axis-field" name="y-axis-field">
-                                    <!-- Opciones específicas -->
                                     <option value="lastValue(pm10)">pm10</option>
                                     <option value="lastValue(pm25)">pm25</option>
                                     <option value="lastValue(um100)">um100</option>
@@ -73,15 +111,8 @@
                     </div>
                 </form>
 
-                <!-- Contenedor para mostrar la gráfica o valores -->
-                <div id="graph-container" class="mt-5">
-                    <!-- Aquí se mostrará la gráfica generada -->
-                </div>
-
-                <!-- Contenedor para mostrar valores calculados -->
-                <div id="result-container" class="mt-5">
-                    <!-- Aquí se mostrarán los valores calculados -->
-                </div>
+                <div id="graph-container" class="mt-5"></div>
+                <div id="result-container" class="mt-5"></div>
             </section>
         </div>
     </div>
@@ -94,7 +125,6 @@
                 console.log('Conectado al servidor SocketIO!')
             });
 
-            // Lógica adicional para manejar la generación de gráficos
             const graphForm = document.getElementById('graph-form');
             const graphContainer = document.getElementById('graph-container');
             const resultContainer = document.getElementById('result-container');
@@ -105,7 +135,6 @@
                 const xAxisField = document.getElementById('x-axis-field').value;
                 const yAxisField = document.getElementById('y-axis-field').value;
 
-                // Lógica para solicitar datos al servidor con los campos seleccionados y generar la gráfica o mostrar valores
                 fetch('/get_graph_data', {
                     method: 'POST',
                     headers: {
@@ -122,7 +151,7 @@
 
                     if (xAxisField === 'country') {
                         const xValues = Object.keys(data);
-                        const paramName = yAxisField.match(/\(([^)]+)\)/)[1]; // Extraer el parámetro entre paréntesis
+                        const paramName = yAxisField.match(/\(([^)]+)\)/)[1];
                         const yValues = Object.values(data).map(countryData => countryData[paramName + '_average']);
 
                         const thresholds = {
@@ -131,7 +160,6 @@
                             um100: 0.01
                         };
 
-                        // Crear un gráfico de barras
                         const trace = {
                             x: xValues,
                             y: yValues,
@@ -140,7 +168,7 @@
                                 color: yValues.map(value => value > thresholds[paramName] ? 'red' : 'blue')
                             }
                         };
-                        console.log('Trace:', trace);
+
                         const layout = {
                             title: `Bar Chart: ${paramName} Average by Country`,
                             xaxis: { title: 'Country' },
@@ -150,10 +178,9 @@
                         Plotly.newPlot(graphContainer, [trace], layout);
 
                     } else {
-                        // Resto del código para 'name' (sin cambios)
                         const xValues = Array.isArray(data) ? data.map(entry => entry[xAxisField]) : [data[xAxisField]];
                         const yValues = Array.isArray(data) ? data.map(entry => entry[yAxisField]) : [data[yAxisField]];
-                        const paramName = yAxisField.match(/\(([^)]+)\)/)[1]; // Extraer el parámetro entre paréntesis
+                        const paramName = yAxisField.match(/\(([^)]+)\)/)[1];
                         const thresholds = {
                             pm10: 20,
                             pm25: 10,
@@ -188,4 +215,3 @@
 </body>
 
 </html>
-
