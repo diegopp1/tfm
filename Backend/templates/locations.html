@@ -8,7 +8,7 @@
     <title>AIR QUALITY APP</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI';
             margin: 0;
             padding: 0;
             background-color: #f0f0f0;
@@ -19,16 +19,6 @@
             background-color: #7fff7f;
             color: #000;
             padding: 1em 0;
-            text-align: center;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 2em auto;
-            padding: 1em;
-            background-color: #d9ffd9;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
 
@@ -53,30 +43,51 @@
             margin-top: 1em;
         }
 
-        .button.is-primary {
-            background-color: #7fff7f;
-            color: #000;
-            border: 1px solid #000;
+        #generate-data {
+            background-color: #d9ffd9;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
         }
 
-        .button.is-light {
+        .field.is-grouped {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .field.is-grouped .control {
+            margin: 0 10px;
+        }
+
+        .select select {
             background-color: #a9ffa9;
-            color: #000;
             border: 1px solid #000;
+            border-radius: 5px;
+            padding: 8px;
+            color: #000;
+        }
+
+        #generateForm .button.is-success {
+            background-color: #4caf50;
+            color: #fff;
+            border: 1px solid #4caf50;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
         }
     </style>
 </head>
 
 <body>
 
-    <section class="hero is-primary">
-        <div class="hero-body">
-            <div class="container">
-                <h1 class="title">
-                    AIR QUALITY APP
-                </h1>
-            </div>
-        </div>
+   <section class="hero is-primary">
+    <div class="hero-body">
+        <h1 class="title" style="background-color: #7fff7f; padding: 1em; border-radius: 5px; color: #000;">
+            AIR QUALITY APP
+        </h1>
+    </div>
     </section>
 
     <!-- Menú de navegación -->
