@@ -10,30 +10,35 @@
     <style>
 
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
             background-color: #f4f4f4;
+            color: #000;
         }
 
         header {
-            background-color: #333;
+            background-color: #7fff7f;
             padding: 1em;
             text-align: center;
-            color: #fff;
+            color: #000;
         }
 
         nav {
-            background-color: #444;
+            background-color: #a9ffa9;
             padding: 0.5em;
             text-align: center;
         }
 
         nav a {
-            color: #fff;
+            color: #000;
             text-decoration: none;
             padding: 1em;
             margin: 0 0.5em;
+            display: inline-block;
+            border: 1px solid #000;
+            border-radius: 5px;
+            font-weight: bold; /* Añadir negrita */
         }
 
         .container {
@@ -43,7 +48,7 @@
             background-color: #fff;
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center; /* Alineación centrada */
+            text-align: center;
         }
 
         #map-container {
@@ -75,96 +80,102 @@
 
     <!-- Menú de navegación -->
     <nav>
+        <a href="/locations">Generate Data</a>
         <a href="/graph">Graph</a>
         <a href="/worldmap">World Map</a>
-        <a href="/locations">Locations</a>
-        <a href="/data">Data</a>
+        <a href="/data">Stored Data</a>
+        <a href="/my_sensors">My Sensors</a>
     </nav>
 
-    <div id="map-container">
-        <div id="map"></div>
-        <div id="info"></div>
-    </div>
+    <!-- Contenido principal -->
+    <div class="container">
+        <!-- Contenido específico de la página -->
+        <div id="map-container">
+            <div id="map"></div>
+            <div id="info"></div>
+        </div>
 
-    <script>
-        var map = L.map('map').setView([0, 0], 2);
-        var data;  // Nueva variable para almacenar los datos
+        <script>
+            // Tu código JavaScript específico de esta página puede ir aquí
+            var map = L.map('map').setView([0, 0], 2);
+            var data;
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
 
-        function updateMap() {
-            console.log('Data received:', data);
+            function updateMap() {
+                console.log('Data received:', data);
 
-            for (var country in data) {
-                if (data.hasOwnProperty(country)) {
-                    var countryData = data[country];
-                    if (!countryData.location) continue;
+                for (var country in data) {
+                    if (data.hasOwnProperty(country)) {
+                        var countryData = data[country];
+                        if (!countryData.location) continue;
 
-                    var markerColor = getColorForCountry(countryData);
+                        var markerColor = getColorForCountry(countryData);
 
-                    var marker = L.circleMarker([countryData.location.lat, countryData.location.lon], {
-                        radius: 5,
-                        color: markerColor,
-                        fillColor: markerColor,
-                        fillOpacity: 1
-                    }).addTo(map);
+                        var marker = L.circleMarker([countryData.location.lat, countryData.location.lon], {
+                            radius: 5,
+                            color: markerColor,
+                            fillColor: markerColor,
+                            fillOpacity: 1
+                        }).addTo(map);
 
-                    // Añadir evento de información al pasar el ratón sobre el marcador
-                    marker.bindTooltip(getTooltipContent(countryData)).openTooltip();
+                        // Añadir evento de información al pasar el ratón sobre el marcador
+                        marker.bindTooltip(getTooltipContent(countryData)).openTooltip();
+                    }
                 }
             }
-        }
 
-        function getColorForCountry(countryData) {
-            var thresholds = {
-                pm10: 20,
-                pm25: 10,
-                um100: 0.01
-            };
+            function getColorForCountry(countryData) {
+                var thresholds = {
+                    pm10: 20,
+                    pm25: 10,
+                    um100: 0.01
+                };
 
-            if (
-                (countryData.pm10_average || 0) > thresholds.pm10 ||
-                (countryData.pm25_average || 0) > thresholds.pm25 ||
-                (countryData.um100_average || 0) > thresholds.um100
-            ) {
-                return 'red';
-            } else if (
-                (countryData.pm10_average || 0) > thresholds.pm10 / 2 ||
-                (countryData.pm25_average || 0) > thresholds.pm25 / 2 ||
-                (countryData.um100_average || 0) > thresholds.um100 / 2
-            ) {
-                return 'yellow';
-            } else {
-                return 'green';
+                if (
+                    (countryData.pm10_average || 0) > thresholds.pm10 ||
+                    (countryData.pm25_average || 0) > thresholds.pm25 ||
+                    (countryData.um100_average || 0) > thresholds.um100
+                ) {
+                    return 'red';
+                } else if (
+                    (countryData.pm10_average || 0) > thresholds.pm10 / 2 ||
+                    (countryData.pm25_average || 0) > thresholds.pm25 / 2 ||
+                    (countryData.um100_average || 0) > thresholds.um100 / 2
+                ) {
+                    return 'yellow';
+                } else {
+                    return 'green';
+                }
             }
-        }
 
-        function getTooltipContent(countryData) {
-            var content = '<b>' + 'Country Avg' + '</b><br>';
-            content += 'PM10: ' + (countryData.pm10_average || 0).toFixed(2) + '<br>';
-            content += 'PM25: ' + (countryData.pm25_average || 0).toFixed(2) + '<br>';
-            content += 'UM100: ' + (countryData.um100_average || 0).toFixed(4) + '<br>';
+            function getTooltipContent(countryData) {
+                var content = '<b>' + 'Country Avg' + '</b><br>';
+                content += 'PM10: ' + (countryData.pm10_average || 0).toFixed(2) + '<br>';
+                content += 'PM25: ' + (countryData.pm25_average || 0).toFixed(2) + '<br>';
+                content += 'UM100: ' + (countryData.um100_average || 0).toFixed(4) + '<br>';
 
-            return content;
-        }
+                return content;
+            }
 
-        function loadData() {
-            fetch('/get_map_data')
-                .then(response => response.json())
-                .then(data => {
-                    // Almacena los datos para su uso posterior
-                    this.data = data;
-                    updateMap();
-                })
-                .catch(error => {
-                    console.error('Error fetching map data:', error);
-                });
-        }
+            function loadData() {
+                fetch('/get_map_data')
+                    .then(response => response.json())
+                    .then(data => {
+                        this.data = data;
+                        updateMap();
+                    })
+                    .catch(error => {
+                        console.error('Error fetching map data:', error);
+                    });
+            }
 
-        loadData();
-    </script>
+            loadData();
+        </script>
+        <!-- Fin del contenido específico de la página -->
+    </div>
 </body>
 
 </html>
