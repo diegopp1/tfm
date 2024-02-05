@@ -63,9 +63,7 @@ services:
 
   # App
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: diegopp1/tfm_test:latest
     ports:
       - "5000:5000"
     depends_on:

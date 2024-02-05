@@ -38,7 +38,7 @@ mongo_locations_collection = mongo_db['locations']
 mongo_countries_collection = mongo_db['countries']
 # Crear el consumidor de Kafka
 consumer = Consumer({
-    'bootstrap.servers': 'broker:9092',
+    'bootstrap.servers': 'broker:29092',
     'group.id': 'my_consumer_group',
     'auto.offset.reset': 'latest'
 })
