@@ -243,7 +243,6 @@ def add_sensor_to_list():
 @app.route('/my_sensors')
 def my_sensors():
     sensors_list = list(mongo_sensors_collection.find())
-    # Si es una solicitud AJAX, devolver los datos como JSON
     return render_template('my_sensors.html', sensors_list=sensors_list)
 
 def handle_devices(data):
