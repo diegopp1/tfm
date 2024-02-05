@@ -1,0 +1,58 @@
+<!-- my_sensors.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Sensors</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+</head>
+
+<body>
+    <section class="hero is-primary">
+        <div class="hero-body">
+            <div class="container">
+                <h1 class="title">
+                    My Sensors
+                </h1>
+                <h2 class="subtitle">
+                    List of Selected Sensors
+                </h2>
+            </div>
+        </div>
+    </section>
+
+    <div class="section">
+        <div class="container">
+            <ul id="mySensorsList">
+                <!-- Datos de sensores se cargarán dinámicamente aquí -->
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Función para actualizar la lista de sensores
+        function updateMySensorsList(data) {
+            var mySensorsList = document.getElementById('mySensorsList');
+            mySensorsList.innerHTML = '';
+
+            data.forEach(sensor => {
+                var listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <strong>ID:</strong> ${sensor._id}<br>
+                    <strong>Location:</strong> ${sensor.location}<br>
+                    <strong>Country:</strong> ${sensor.country}<br>
+                    <hr>
+                `;
+                mySensorsList.appendChild(listItem);
+            });
+        }
+
+        // Obtener la lista de sensores al cargar la página
+        updateMySensorsList(JSON.parse('{{ sensors_list | tojson | safe }}'));
+
+    </script>
+</body>
+
+</html>

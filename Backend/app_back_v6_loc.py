@@ -36,6 +36,7 @@ mongo_db = mongo_client['iot_data']
 mongo_air_quality_collection = mongo_db['air_quality']
 mongo_locations_collection = mongo_db['locations']
 mongo_countries_collection = mongo_db['countries']
+mongo_sensors_collection = mongo_db['my_sensors']
 # Crear el consumidor de Kafka
 consumer = Consumer({
     'bootstrap.servers': 'broker:29092',
@@ -210,6 +211,41 @@ def perform_search():
     filtered_data = json.loads(json_util.dumps(filtered_data))
 
     return jsonify(filtered_data)
+
+@app.route('/add_sensor_to_list', methods=['POST'])
+def add_sensor_to_list():
+    try:
+        sensor_data = request.json
+        sensor_id = sensor_data.get('sensorId')
+        location = sensor_data.get('location')
+        country = sensor_data.get('country')
+
+        # Verificar si el sensor ya está en la lista
+        existing_sensor = mongo_sensors_collection.find_one({'_id': sensor_id})
+
+        if existing_sensor:
+            return jsonify({'error': 'El sensor ya está en la lista.'}), 400
+
+        # Si no existe, agregar el sensor a la lista
+        new_sensor = {
+            '_id': sensor_id,
+            'location': location,
+            'country': country
+        }
+
+        mongo_sensors_collection.insert_one(new_sensor)
+
+        return jsonify({'message': 'Sensor agregado correctamente a la lista.'}), 200
+    except Exception as e:
+        print(f"Error al agregar el sensor: {e}")
+        return jsonify({'error': 'Error interno del servidor.'}), 500
+
+@app.route('/my_sensors')
+def my_sensors():
+    sensors_list = list(mongo_sensors_collection.find())
+    # Si es una solicitud AJAX, devolver los datos como JSON
+    return render_template('my_sensors.html', sensors_list=sensors_list)
+
 def handle_devices(data):
     id = data.get('id')
     country = data.get('country')

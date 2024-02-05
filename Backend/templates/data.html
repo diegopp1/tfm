@@ -50,9 +50,10 @@
             <!-- Sección para mostrar datos almacenados y cuenta de sensores encontrados -->
             <section id="stored-data" class="mt-5">
                 <div class="notification is-success" id="documentCount"></div>
-                <ul id="storedDataList">
-                    <!-- Datos se cargarán dinámicamente aquí -->
-                </ul>
+                <ul id="storedDataList"></ul>
+                <!-- Agregar el botón en la sección de cada sensor -->
+
+
             </section>
         </div>
     </div>
@@ -101,6 +102,7 @@
                     <ul>
                         ${entry.parameters ? entry.parameters.map(parameter => `<li>${parameter.parameter}: ${parameter.lastValue} ${parameter.unit}</li>`).join('') : ''}
                     </ul>
+                    <button class="button is-primary" onclick="addSensorToList('${entry.id}', '${entry.name}', '${entry.country}')">Add to 'My Sensors'</button>
                     <hr>
                 `;
                 storedDataList.appendChild(listItem);
@@ -111,6 +113,24 @@
         function updateDocumentCount(count) {
             var documentCount = document.getElementById('documentCount');
             documentCount.textContent = `SENSORS FOUND: ${count}`;
+        }
+        // En el script del HTML
+        function addSensorToList(sensorId, location, country) {
+            fetch('/add_sensor_to_list', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ sensorId, location, country }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Manejar la respuesta según sea necesario
+                console.log(data);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
         }
 
         document.addEventListener('DOMContentLoaded', function () {
