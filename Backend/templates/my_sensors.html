@@ -6,101 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Sensors</title>
     <style>
-
-        body {
-            font-family: 'Segoe UI';
-            margin: 0;
-            padding: 0;
-            background-color: #f0f0f0;
-            color: #000;
-        }
-
-        header {
-            background-color: #7fff7f;
-            padding: 1em;
-            text-align: center;
-            color: #000;
-        }
-
-        nav {
-            background-color: #a9ffa9;
-            padding: 0.5em;
-            text-align: center;
-        }
-
-        nav a {
-            color: #000;
-            text-decoration: none;
-            padding: 1em;
-            margin: 0 0.5em;
-            display: inline-block;
-            border: 1px solid #000;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 2em auto;
-            padding: 1em;
-            background-color: #d9ffd9;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        .sensor-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid #000;
-            border-radius: 5px;
-            padding: 10px;
-            margin-bottom: 10px;
-        }
-
-        .sensor-details {
-            flex: 1;
-        }
-
-        .remove-button {
-            margin-left: 10px;
-            background-color: #ff4c4c; /* Relleno rojo */
-            color: #fff; /* Texto blanco */
-            padding: 10px 15px; /* Aumentar el padding para hacerlo más grande */
-            border: 1px solid #ff4c4c; /* Borde rojo */
-            border-radius: 5px; /* Radio de esquina */
-            cursor: pointer;
-        }
-
-        .start-button {
-            margin-left: 10px;
-            background-color: #4caf50; /* Green */
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        .home-link {
-            color: black;
-            text-decoration: none;
-        }
+        /* ... (tu estilo actual) */
     </style>
 </head>
 
 <body>
     <header>
         <a href="/" class="home-link">
-        <h1><strong>AIR QUALITY APP</strong></h1>
+            <h1><strong>AIR QUALITY APP</strong></h1>
         </a>
     </header>
-    <!-- Menú de navegación -->
+
     <nav>
         <a href="/locations">Generate Data</a>
         <a href="/graph">Graph</a>
@@ -131,7 +47,6 @@
     </div>
 
     <script>
-        // Función para actualizar la lista de sensores
         function updateMySensorsList(data) {
             var mySensorsList = document.getElementById('mySensorsList');
             mySensorsList.innerHTML = '';
@@ -159,7 +74,6 @@
             });
         }
 
-        // Función para eliminar un sensor
         function removeSensor(sensorId) {
             fetch('/remove_sensor', {
                 method: 'POST',
@@ -171,16 +85,24 @@
             .then(response => response.json())
             .then(data => {
                 console.log(data);
-                // Recargar la página después de la eliminación
                 window.location.reload();
             })
             .catch(error => console.error('Error:', error));
         }
 
-        // Función para iniciar el productor de Kafka para un sensor específico
+        function startKafkaProducer(sensorId) {
+            fetch('/start_mysensors_producer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ sensorId }),
+            })
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
+        }
 
-
-        // Obtener la lista de sensores al cargar la página
         updateMySensorsList(JSON.parse('{{ sensors_list | tojson | safe }}'));
     </script>
 </body>

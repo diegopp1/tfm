@@ -347,7 +347,7 @@ def mysensors_produce(sensor_id):
             data_filtered = generate_filtered_data(data)
 
             mongo_sensors_data_collection.insert_one(data_filtered)
-            return {"status": "success", "message": f"Productor iniciado para el sensor {sensor_id}"}
+            return {"status": "success", "message": f"Datos introducidos en tu colección de MongoDB para el sensor {sensor_id}"}
         else:
             return {"status": "error", "message": f"No se encontró información para el sensor {sensor_id}"}
 
