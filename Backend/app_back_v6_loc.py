@@ -326,7 +326,8 @@ def is_producer_running():
 def is_second_producer_running():
     return False
 
-def start_sensors_producer(sensor_id):
+@app.route('/start_mysensors_producer', methods=['POST'])
+def mysensors_produce(sensor_id):
     try:
         # Obtén la información del sensor desde MongoDB
         sensor_info = mongo_sensors_collection.find_one({"_id": sensor_id})

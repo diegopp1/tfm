@@ -178,19 +178,7 @@
         }
 
         // Función para iniciar el productor de Kafka para un sensor específico
-        function startKafkaProducer(sensorId) {
-            var intervalInput = document.getElementById(`intervalInput_${sensorId}`).value;
-            fetch('/start_kafka_producer', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ sensorId, interval: intervalInput }),
-            })
-            .then(response => response.json())
-            .then(data => console.log(data))
-            .catch(error => console.error('Error:', error));
-        }
+
 
         // Obtener la lista de sensores al cargar la página
         updateMySensorsList(JSON.parse('{{ sensors_list | tojson | safe }}'));
