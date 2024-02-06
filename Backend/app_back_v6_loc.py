@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_socketio import SocketIO, emit
 from confluent_kafka import Consumer, KafkaException
 from pymongo.mongo_client import MongoClient
@@ -180,11 +180,12 @@ def generate_data():
         selected_country = request.form.get('country')
         start_second_producer(selected_country)
         print('Conectado')
-        return 'Generating data...'
+        return redirect(url_for('index'))
     except Exception as e:
         # Manejar la excepción aquí, puedes registrarla o hacer algo más según tus necesidades
         print(f"Error en la ruta '/generate': {e}")
         return jsonify({'error': 'Se produjo un error al procesar la solicitud'})
+
 @app.route('/worldmap')
 def world_map():
     return render_template('map.html')
