@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Sensors</title>
     <style>
-
         body {
             font-family: 'Segoe UI';
             margin: 0;
@@ -97,10 +96,10 @@
 <body>
     <header>
         <a href="/" class="home-link">
-        <h1><strong>AIR QUALITY APP</strong></h1>
+            <h1><strong>AIR QUALITY APP</strong></h1>
         </a>
     </header>
-    <!-- Menú de navegación -->
+
     <nav>
         <a href="/locations">Generate Data</a>
         <a href="/graph">Graph</a>
@@ -131,7 +130,6 @@
     </div>
 
     <script>
-        // Función para actualizar la lista de sensores
         function updateMySensorsList(data) {
             var mySensorsList = document.getElementById('mySensorsList');
             mySensorsList.innerHTML = '';
@@ -159,7 +157,6 @@
             });
         }
 
-        // Función para eliminar un sensor
         function removeSensor(sensorId) {
             fetch('/remove_sensor', {
                 method: 'POST',
@@ -171,16 +168,24 @@
             .then(response => response.json())
             .then(data => {
                 console.log(data);
-                // Recargar la página después de la eliminación
                 window.location.reload();
             })
             .catch(error => console.error('Error:', error));
         }
 
-        // Función para iniciar el productor de Kafka para un sensor específico
+        function startKafkaProducer(sensorId) {
+            fetch('/start_mysensors_producer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ sensor_id:sensorId }),
+            })
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
+        }
 
-
-        // Obtener la lista de sensores al cargar la página
         updateMySensorsList(JSON.parse('{{ sensors_list | tojson | safe }}'));
     </script>
 </body>
