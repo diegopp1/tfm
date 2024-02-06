@@ -1,3 +1,4 @@
+import time
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_socketio import SocketIO, emit
 from confluent_kafka import Consumer, KafkaException
@@ -37,6 +38,7 @@ mongo_air_quality_collection = mongo_db['air_quality']
 mongo_locations_collection = mongo_db['locations']
 mongo_countries_collection = mongo_db['countries']
 mongo_sensors_collection = mongo_db['my_sensors']
+mongo_sensors_data_collection = mongo_db['my_sensors_data']
 # Crear el consumidor de Kafka
 consumer = Consumer({
     'bootstrap.servers': 'broker:29092',
@@ -289,7 +291,6 @@ def handle_devices(data):
         if filtered_data['parameters']:
             mongo_air_quality_collection.insert_one(filtered_data)
             socketio.emit('air_quality_data', json.dumps(filtered_data))
-
 @socketio.on('connect')
 def handle_connect():
     print('Cliente conectado')
@@ -324,6 +325,33 @@ def is_producer_running():
 
 def is_second_producer_running():
     return False
+
+def start_sensors_producer(sensor_id):
+    try:
+        # Obtén la información del sensor desde MongoDB
+        sensor_info = mongo_sensors_collection.find_one({"_id": sensor_id})
+
+        if sensor_info is not None:
+            # Configuración del productor de Kafka
+            kafka_producer_script = "/app/Producer (OpenAQ)/kafka-producer-mysensors.py"
+
+            # Iniciar el proceso del productor con los argumentos necesarios
+            subprocess.Popen(["python", kafka_producer_script, sensor_info["_id"]])
+            time.sleep(5)
+            # Suscribirse al tema 'my_sensors' para recibir los datos del sensor
+            consumer.subscribe('my_sensors')
+            time.sleep(2)
+            data = consume_message()
+            # Agregar una entrada en la nueva colección de MongoDB para el sensor
+            data_filtered = generate_filtered_data(data)
+
+            mongo_sensors_data_collection.insert_one(data_filtered)
+            return {"status": "success", "message": f"Productor iniciado para el sensor {sensor_id}"}
+        else:
+            return {"status": "error", "message": f"No se encontró información para el sensor {sensor_id}"}
+
+    except Exception as e:
+        return {"status": "error", "message": f"Error al iniciar el productor: {str(e)}"}
 def calculate_average_by_country(collection):
     # Obtener la lista de países únicos presentes en la colección
     unique_countries = collection.distinct('country')
