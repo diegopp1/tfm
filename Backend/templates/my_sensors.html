@@ -72,6 +72,21 @@
             border-radius: 5px; /* Radio de esquina */
             cursor: pointer;
         }
+
+        .start-button {
+            margin-left: 10px;
+            background-color: #4caf50; /* Green */
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
         .home-link {
             color: black;
             text-decoration: none;
@@ -134,6 +149,11 @@
                     <div class="remove-button" onclick="removeSensor('${sensor._id}')">
                         Remove
                     </div>
+                    <div>
+                        <button class="start-button" onclick="startKafkaProducer('${sensor._id}')">
+                            Start Streaming
+                        </button>
+                    </div>
                 `;
                 mySensorsList.appendChild(listItem);
             });
@@ -154,6 +174,21 @@
                 // Recargar la página después de la eliminación
                 window.location.reload();
             })
+            .catch(error => console.error('Error:', error));
+        }
+
+        // Función para iniciar el productor de Kafka para un sensor específico
+        function startKafkaProducer(sensorId) {
+            var intervalInput = document.getElementById(`intervalInput_${sensorId}`).value;
+            fetch('/start_kafka_producer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ sensorId, interval: intervalInput }),
+            })
+            .then(response => response.json())
+            .then(data => console.log(data))
             .catch(error => console.error('Error:', error));
         }
 
