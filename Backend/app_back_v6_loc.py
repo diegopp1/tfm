@@ -19,7 +19,6 @@ sec_producer_running = False
 
 logging.basicConfig(level=logging.INFO)
 cons_logger = logging.getLogger('consumer')
-cns_logger = logging.getLogger('kafka-producer-mysensors')
 app_logger = logging.getLogger('app_back_v6_loc')
 
 # Configuración de MongoDB
@@ -340,9 +339,12 @@ def mysensors_produce():
             # Configuración del productor de Kafka
             kafka_producer_script = "/app/Producer (OpenAQ)/kafka-producer-mysensors.py"
             # Iniciar el proceso del productor con los argumentos necesarios
-            subprocess.Popen(["python", kafka_producer_script, sensor_info['_id']])
-            cns_logger.info(f"Productor de Kafka iniciado para el sensor {sensor_info['_id']}")
-            time.sleep(10)
+            process = subprocess.Popen(["python", kafka_producer_script, sensor_info['_id']], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            for line in process.stdout:
+                app_logger.info(line, end='')
+            for line in process.stderr:
+                app_logger.error(line, end='')
+            cons_logger.info(f"Productor de Kafka iniciado para el sensor {sensor_info['_id']}")
             cons_logger.info(f"Consumidor suscrito al tema 'my_sensors' para el sensor {sensor_info['_id']}")
             data = consume_message()
             app_logger.info("Datos en bruto %s", data)
