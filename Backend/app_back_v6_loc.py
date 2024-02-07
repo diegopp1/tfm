@@ -341,9 +341,9 @@ def mysensors_produce():
             # Iniciar el proceso del productor con los argumentos necesarios
             process = subprocess.Popen(["python", kafka_producer_script, sensor_info['_id']], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             for line in process.stdout:
-                app_logger.info(line, end='')
+                app_logger.info(line.strip())
             for line in process.stderr:
-                app_logger.error(line, end='')
+                app_logger.error(line.strip())
             cons_logger.info(f"Productor de Kafka iniciado para el sensor {sensor_info['_id']}")
             cons_logger.info(f"Consumidor suscrito al tema 'my_sensors' para el sensor {sensor_info['_id']}")
             data = consume_message()
