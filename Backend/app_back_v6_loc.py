@@ -331,7 +331,7 @@ def is_second_producer_running():
 @app.route('/start_mysensors_producer', methods=['POST'])
 def mysensors_produce():
     sensor_id = request.get_json().get('sensor_id')
-    app_logger.info(sensor_id)
+
     try:
         # Obtén la información del sensor desde MongoDB
         sensor_info = mongo_sensors_collection.find_one({"_id": sensor_id})
@@ -344,7 +344,7 @@ def mysensors_produce():
             subprocess.Popen(["python", kafka_producer_script, sensor_info["_id"]])
             app_logger.info(f"Productor de Kafka iniciado para el sensor {sensor_info['_id']}")
             # Suscribirse al tema 'my_sensors' para recibir los datos del sensor
-            consumer.subscribe('my_sensors')
+            consumer.subscribe(['my_sensors'])
             cons_logger.info(f"Consumidor suscrito al tema 'my_sensors' para el sensor {sensor_info['_id']}")
             data = consume_message()
             # Agregar una entrada en la nueva colección de MongoDB para el sensor
