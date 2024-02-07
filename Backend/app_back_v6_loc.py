@@ -18,7 +18,7 @@ producer_running = False
 sec_producer_running = False
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('consumer')
+cons_logger = logging.getLogger('consumer')
 cns_logger = logging.getLogger('kafka-producer-mysensors')
 app_logger = logging.getLogger('app_back_v6_loc')
 
@@ -30,9 +30,9 @@ mongo_client = MongoClient(mongo_uri)
 try:
     # Verificación de la conexión a MongoDB al iniciar la aplicación
     mongo_client.admin.command('ping')
-    logger.info("Conexión a MongoDB establecida exitosamente!")
+    cons_logger.info("Conexión a MongoDB establecida exitosamente!")
 except Exception as e:
-    logger.error("Error conectando a MongoDB:", e)
+    cons_logger.error("Error conectando a MongoDB:", e)
     raise SystemExit("No se pudo conectar a MongoDB. Saliendo...")
 
 mongo_db = mongo_client['iot_data']
@@ -51,7 +51,7 @@ consumer = Consumer({
 try:
     consumer.subscribe(['locations', 'datos'])
 except KafkaException as e:
-    logger.error("Error al suscribirse a los temas de Kafka:", e)
+    cons_logger.error("Error al suscribirse a los temas de Kafka:", e)
     raise SystemExit("No se pudo suscribir a los temas de Kafka. Saliendo...")
 
 devices_by_location = {}
@@ -64,13 +64,13 @@ def consume_message():
             topic = msg.topic()
             data = json.loads(msg.value().decode('utf-8'))
             if isinstance(data, dict):
-                logger.info("Datos recibidos del tema {}: {}".format(topic, data))
+                cons_logger.info("Datos recibidos del tema {}: {}".format(topic, data))
                 data['_topic'] = topic  # Añadir el topic al diccionario
                 return data
             else:
-                logger.warning("Datos no válidos recibidos del tema {}: {}".format(topic, data))
+                cons_logger.warning("Datos no válidos recibidos del tema {}: {}".format(topic, data))
     except Exception as e:
-        logger.error(f"Error al procesar mensaje de Kafka: {e}")
+        cons_logger.error(f"Error al procesar mensaje de Kafka: {e}")
     return None
 
 def generate_filtered_device(data):
@@ -110,7 +110,7 @@ def background_thread():
                 handle_devices(data)
                 socketio.sleep(1)
     except Exception as e:
-        logger.error(f"Error en el hilo principal: {e}")
+        cons_logger.error(f"Error en el hilo principal: {e}")
 
 def get_available_fields():
     # Devolver las opciones específicas para los ejes X e Y
@@ -345,7 +345,7 @@ def mysensors_produce():
             app_logger.info(f"Productor de Kafka iniciado para el sensor {sensor_info['_id']}")
             # Suscribirse al tema 'my_sensors' para recibir los datos del sensor
             consumer.subscribe('my_sensors')
-
+            cons_logger.info(f"Consumidor suscrito al tema 'my_sensors' para el sensor {sensor_info['_id']}")
             data = consume_message()
             # Agregar una entrada en la nueva colección de MongoDB para el sensor
             data_filtered = generate_filtered_data(data)

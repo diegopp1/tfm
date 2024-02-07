@@ -25,7 +25,7 @@ openaq_api_key = '83fcfc1c531d71a7290846eb31fd75b91a3f1cd85653f2fef21f5140e23717
 # URL base de la API de OpenAQ para obtener datos de calidad del aire por localización
 openaq_data_url_temp = "https://api.openaq.org/v2/latest?location_id={location_id}&limit=100&page=1&offset=0&sort=asc"
 
-def fetch_openaq_data(url):
+def fetch_openaq_data(openaq_data_url):
     try:
         response = requests.get(openaq_data_url, headers={"X-API-Key": openaq_api_key})
 
