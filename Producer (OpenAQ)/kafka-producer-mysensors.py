@@ -22,8 +22,8 @@ kafka_topic = 'my_sensors'
 # API Key de OpenAQ (reemplaza 'your-openaq-api-key' con tu clave real)
 openaq_api_key = '83fcfc1c531d71a7290846eb31fd75b91a3f1cd85653f2fef21f5140e2371746'
 
-# URL base de la API de OpenAQ para obtener datos de calidad del aire por país
-openaq_data_url_temp = "https://api.openaq.org/v2/latest/{location_id}?limit=100&page=1&offset=0&sort=asc"
+# URL base de la API de OpenAQ para obtener datos de calidad del aire por localización
+openaq_data_url_temp = "https://api.openaq.org/v2/latest?location_id={location_id}&limit=100&page=1&offset=0&sort=asc"
 
 def fetch_openaq_data(url):
     try:

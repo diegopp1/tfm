@@ -18,7 +18,7 @@ producer_running = False
 sec_producer_running = False
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('consumer')
+logger = logging.getLogger('consumer', 'app_back_v6_loc.py')
 
 # Configuración de MongoDB
 mongo_password = config('MONGO_PASSWORD', default='')
