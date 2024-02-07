@@ -346,12 +346,14 @@ def mysensors_produce():
             # Suscribirse al tema 'my_sensors' para recibir los datos del sensor
             consumer.subscribe(['my_sensors'])
             cons_logger.info(f"Consumidor suscrito al tema 'my_sensors' para el sensor {sensor_info['_id']}")
+            time.sleep(10)
             data = consume_message()
-            app_logger.info(data)
+            app_logger.info("Datos en bruto", data)
             # Agregar una entrada en la nueva colección de MongoDB para el sensor
             data_filtered = generate_filtered_data(data)
-            app_logger.info(data_filtered)
+            app_logger.info("Datos filtrados", data_filtered)
             mongo_sensors_data_collection.insert_one(data_filtered)
+
             return {"status": "success", "message": f"Datos introducidos en tu colección de MongoDB para el sensor {sensor_id}"}
         else:
             return {"status": "error", "message": f"No se encontró información para el sensor {sensor_id}"}
