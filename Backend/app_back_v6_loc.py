@@ -183,11 +183,11 @@ def generate_data():
         global selected_country
         selected_country = request.form.get('country')
         start_second_producer(selected_country)
-        print('Conectado')
+        app_logger.info('Conectado')
         return redirect(url_for('index'))
     except Exception as e:
         # Manejar la excepción aquí, puedes registrarla o hacer algo más según tus necesidades
-        print(f"Error en la ruta '/generate': {e}")
+        app_logger.info(f"Error en la ruta '/generate': {e}")
         return jsonify({'error': 'Se produjo un error al procesar la solicitud'})
 
 @app.route('/worldmap')
@@ -242,7 +242,7 @@ def add_sensor_to_list():
 
         return jsonify({'message': 'Sensor agregado correctamente a la lista.'}), 200
     except Exception as e:
-        print(f"Error al agregar el sensor: {e}")
+        app_logger.error(f"Error al agregar el sensor: {e}")
         return jsonify({'error': 'Error interno del servidor.'}), 500
 
 @app.route('/my_sensors')
@@ -261,7 +261,7 @@ def remove_sensor():
 
         return jsonify({'message': 'Sensor eliminado correctamente.'}), 200
     except Exception as e:
-        print(f"Error al eliminar el sensor: {e}")
+        app_logger.error(f"Error al eliminar el sensor: {e}")
         return jsonify({'error': 'Error interno del servidor.'}), 500
 
 def handle_devices(data):
@@ -310,17 +310,17 @@ def start_producer():
     if not is_producer_running():
         script_path = '/app/Producer (OpenAQ)/kafka-producerv3.py'
         subprocess.Popen(['python', script_path])
-        print("Productor de Kafka iniciado.")
+        app_logger.info("Productor de Kafka iniciado.")
     else:
-        print("El productor ya está en ejecución.")
+        app_logger.info("El productor ya está en ejecución.")
 
 def start_second_producer(country):
     if not is_second_producer_running():
         script_path = '/app/Producer (OpenAQ)/kafka-producer-loc.py'
         subprocess.Popen(['python', script_path, country])
-        print("Segundo productor de Kafka iniciado.")
+        app_logger.info("Segundo productor de Kafka iniciado.")
     else:
-        print("El segundo productor ya está en ejecución.")
+        app_logger.info("El segundo productor ya está en ejecución.")
 
 def is_producer_running():
     return False
@@ -331,7 +331,7 @@ def is_second_producer_running():
 @app.route('/start_mysensors_producer', methods=['POST'])
 def mysensors_produce():
     sensor_id = request.get_json().get('sensor_id')
-    print(sensor_id)
+    app_logger.info(sensor_id)
     try:
         # Obtén la información del sensor desde MongoDB
         sensor_info = mongo_sensors_collection.find_one({"_id": sensor_id})
@@ -342,14 +342,14 @@ def mysensors_produce():
 
             # Iniciar el proceso del productor con los argumentos necesarios
             subprocess.Popen(["python", kafka_producer_script, sensor_info["_id"]])
-            time.sleep(5)
+            app_logger.info(f"Productor de Kafka iniciado para el sensor {sensor_info['_id']}")
             # Suscribirse al tema 'my_sensors' para recibir los datos del sensor
             consumer.subscribe('my_sensors')
-            time.sleep(2)
+
             data = consume_message()
             # Agregar una entrada en la nueva colección de MongoDB para el sensor
             data_filtered = generate_filtered_data(data)
-
+            app_logger.info(data_filtered)
             mongo_sensors_data_collection.insert_one(data_filtered)
             return {"status": "success", "message": f"Datos introducidos en tu colección de MongoDB para el sensor {sensor_id}"}
         else:
