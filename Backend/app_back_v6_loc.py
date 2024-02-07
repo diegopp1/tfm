@@ -56,6 +56,7 @@ except KafkaException as e:
 devices_by_location = {}
 selected_country = 'US'
 
+
 def consume_message():
     try:
         msg = consumer.poll(1.0)
@@ -72,6 +73,7 @@ def consume_message():
         cons_logger.error(f"Error al procesar mensaje de Kafka: {e}")
     return None
 
+
 def generate_filtered_device(data):
     return {
         'id': data.get('id'),
@@ -85,41 +87,47 @@ def generate_filtered_device(data):
         'coordinates': data.get('coordinates')
     }
 
+
 def generate_filtered_data(data):
     return {
-        'id': data.get('id'),
-        'name': data.get('name'),
+        'location': data.get('name'),
         'country': data.get('country'),
-        'lastUpdated': data.get('lastUpdated'),
         'parameters': [
-            param for param in data.get('parameters', [])
-            if param.get('id') in [1, 2, 135]  # Filtrar por ID 1, 2 y 135
+            {
+                'id': param.get('parameter'),  # Usar 'parameter' en lugar de 'id' si es el campo correcto
+                'value': param.get('value'),
+                'unit': param.get('unit'),
+                'lastUpdated': param.get('lastUpdated')
+            }
+            for param in data.get('measurements', [])  # Ajustar al nombre correcto de los datos de 'my_sensors'
         ],
         'coordinates': data.get('coordinates')
     }
+
 
 def background_thread():
     try:
         while True:
             data = consume_message()
             if data is not None:
-                if '_id' in data:
-                    data['_id'] = str(data['_id'])
                 socketio.emit('air_quality_data', data)
                 handle_devices(data)
                 socketio.sleep(1)
     except Exception as e:
         cons_logger.error(f"Error en el hilo principal: {e}")
 
+
 def get_available_fields():
     # Devolver las opciones específicas para los ejes X e Y
     return ['name', 'lastUpdated', 'country', 'lastValue(pm10)', 'lastValue(pm25)', 'lastValue(um100)']
+
 
 @app.route('/graph')
 def graph():
     # Obtener los campos disponibles para los ejes X e Y
     available_fields = get_available_fields()
     return render_template('graph.html', available_fields=available_fields)
+
 
 @app.route('/get_graph_data', methods=['POST'])
 def get_graph_data():
@@ -151,7 +159,8 @@ def get_graph_data():
 
                 # Agregar los valores de cada parámetro al diccionario
                 for param in y_parameters:
-                    value = next((p.get('lastValue', 0) for p in entry.get('parameters', []) if p.get('parameter') == param), 0)
+                    value = next(
+                        (p.get('lastValue', 0) for p in entry.get('parameters', []) if p.get('parameter') == param), 0)
                     new_entry[f'lastValue({param})'] = value
 
                 data_list.append(new_entry)
@@ -164,6 +173,7 @@ def get_graph_data():
     else:
         return jsonify({'error': 'Invalid request. Please select valid axes.'})
 
+
 @app.route('/')
 def index():
     global producer_running
@@ -172,9 +182,11 @@ def index():
         producer_running = True
     return render_template('index2.html')
 
+
 @app.route('/locations')
 def locations():
     return render_template('locations.html', country=selected_country)
+
 
 @app.route('/generate', methods=['POST'])
 def generate_data():
@@ -189,14 +201,17 @@ def generate_data():
         app_logger.info(f"Error en la ruta '/generate': {e}")
         return jsonify({'error': 'Se produjo un error al procesar la solicitud'})
 
+
 @app.route('/worldmap')
 def world_map():
     return render_template('map.html')
+
 
 @app.route('/get_map_data', methods=['GET'])
 def get_map_data():
     averages_with_coordinates = get_averages_with_coordinates(mongo_locations_collection)
     return jsonify(averages_with_coordinates)
+
 
 @app.route('/data')
 def data():
@@ -215,6 +230,7 @@ def perform_search():
     filtered_data = json.loads(json_util.dumps(filtered_data))
 
     return jsonify(filtered_data)
+
 
 @app.route('/add_sensor_to_list', methods=['POST'])
 def add_sensor_to_list():
@@ -244,10 +260,12 @@ def add_sensor_to_list():
         app_logger.error(f"Error al agregar el sensor: {e}")
         return jsonify({'error': 'Error interno del servidor.'}), 500
 
+
 @app.route('/my_sensors')
 def my_sensors():
     sensors_list = list(mongo_sensors_collection.find())
     return render_template('my_sensors.html', sensors_list=sensors_list)
+
 
 @app.route('/remove_sensor', methods=['POST'])
 def remove_sensor():
@@ -263,54 +281,42 @@ def remove_sensor():
         app_logger.error(f"Error al eliminar el sensor: {e}")
         return jsonify({'error': 'Error interno del servidor.'}), 500
 
+
 def handle_devices(data):
-    id = data.get('id')
-    country = data.get('country')
     topic = data.get('_topic')  # Obtener el topic
     app_logger.info(f"Manejando datos de '{topic}'")
     if topic == 'locations':
         # Manejar los datos de 'locations'
-        if id not in devices_by_location:
-            devices_by_location[id] = {
-                'id': id,
-                'country': country,
-                'devices': []
-            }
-
-        devices = devices_by_location[id]['devices'] # Obtener la lista de dispositivos
-        filtered_device = generate_filtered_device(data) # Filtrar los datos del dispositivo
-        devices.append(filtered_device) # Agregar el dispositivo a la lista de dispositivos
+        filtered_device = generate_filtered_device(data)  # Filtrar los datos del dispositivo
         mongo_locations_collection.insert_one(filtered_device)
-        socketio.emit('devices', [filtered_device]) # Emitir los datos del dispositivo a través de Socket.IO
 
     elif topic == 'datos':
         # Manejar los datos de 'datos'
-        data['_id'] = str(data.get('_id', ''))  # Convertir el _id a string
         filtered_data = generate_filtered_data(data)
-
         # Solo insertar y emitir si hay parámetros después del filtrado
-        if filtered_data['parameters']:
-            mongo_air_quality_collection.insert_one(filtered_data)
-            socketio.emit('air_quality_data', json.dumps(filtered_data))
-    elif topic == 'sensors':
+        mongo_air_quality_collection.insert_one(filtered_data)
+
+    elif topic == 'my_sensors':
         # Manejar los datos de 'sensors'
-        data['_id'] = str(data.get('_id', ''))
         filtered_sensor = generate_filtered_data(data)
-        mongo_sensors_collection.insert_one(filtered_sensor)
-        socketio.emit('sensors', json.dumps(filtered_sensor)) # Emitir los datos del sensor a través de Socket.IO
+        mongo_sensors_data_collection.insert_one(filtered_sensor)
+
 
 @socketio.on('connect')
 def handle_connect():
     print('Cliente conectado')
     emit('status', {'data': 'Conexión establecida'})
 
+
 @socketio.on('disconnect')
 def handle_disconnect():
     print('Cliente desconectado')
 
+
 def get_project_root() -> str:
     """Obtiene la ruta al directorio principal del proyecto."""
     return os.path.dirname(os.path.abspath(__file__))
+
 
 def start_producer():
     if not is_producer_running():
@@ -320,6 +326,7 @@ def start_producer():
     else:
         app_logger.info("El productor ya está en ejecución.")
 
+
 def start_second_producer(country):
     if not is_second_producer_running():
         script_path = '/app/Producer (OpenAQ)/kafka-producer-loc.py'
@@ -328,11 +335,14 @@ def start_second_producer(country):
     else:
         app_logger.info("El segundo productor ya está en ejecución.")
 
+
 def is_producer_running():
     return False
 
+
 def is_second_producer_running():
     return False
+
 
 @app.route('/start_mysensors_producer', methods=['POST'])
 def mysensors_produce():
@@ -358,6 +368,8 @@ def mysensors_produce():
         app_logger.error(f"Error al iniciar el productor de Kafka: {e}")
 
     return redirect(url_for('my_sensors'))
+
+
 def calculate_average_by_country(collection):
     # Obtener la lista de países únicos presentes en la colección
     unique_countries = collection.distinct('country')
@@ -402,6 +414,7 @@ def calculate_average_by_country(collection):
 
     return averages_by_country
 
+
 def get_averages_with_coordinates(collection):
     # Obtener la información de coordenadas de cada país desde la colección 'countries'
     country_coordinates = {}
@@ -437,6 +450,7 @@ def get_averages_with_coordinates(collection):
     print(f'Averages with coordinates: {averages_with_coordinates}')
     return averages_with_coordinates
 
+
 if __name__ == '__main__':
-    socketio.start_background_task(target=background_thread) # Iniciar el hilo de fondo para consumir datos de Kafka
-    socketio.run(app,  host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True, use_reloader=False)
+    socketio.start_background_task(target=background_thread)  # Iniciar el hilo de fondo para consumir datos de Kafka
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True, use_reloader=False)
