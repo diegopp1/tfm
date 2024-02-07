@@ -44,7 +44,7 @@ mongo_sensors_data_collection = mongo_db['my_sensors_data']
 consumer = Consumer({
     'bootstrap.servers': 'broker:29092',
     'group.id': 'my_consumer_group',
-    'auto.offset.reset': 'earliest'
+    'auto.offset.reset': 'latest'
 })
 
 try:
@@ -215,8 +215,27 @@ def get_map_data():
 
 @app.route('/data')
 def data():
-    stored_data = list(mongo_locations_collection.find())
-    return render_template('data.html', stored_data=stored_data)
+    # Obtener valores únicos para los campos que quieres comparar
+    unique_locations = mongo_locations_collection.distinct('location')
+    unique_countries = mongo_locations_collection.distinct('country')
+    unique_last_updated = mongo_locations_collection.distinct('lastUpdated')
+
+    # Filtrar la colección para evitar duplicados
+    filtered_data = []
+    for location in unique_locations:
+        for country in unique_countries:
+            for last_updated in unique_last_updated:
+                # Consulta para encontrar documentos que coincidan con los valores únicos
+                query = {
+                    'location': location,
+                    'country': country,
+                    'lastUpdated': last_updated
+                }
+                document = mongo_locations_collection.find_one(query)
+                if document:
+                    filtered_data.append(document)
+
+    return render_template('data.html', stored_data=filtered_data)
 
 
 @app.route('/perform_search', methods=['POST'])
