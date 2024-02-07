@@ -49,7 +49,7 @@ consumer = Consumer({
 })
 
 try:
-    consumer.subscribe(['locations', 'datos'])
+    consumer.subscribe(['locations', 'datos', 'my_sensors'])
 except KafkaException as e:
     cons_logger.error("Error al suscribirse a los temas de Kafka:", e)
     raise SystemExit("No se pudo suscribir a los temas de Kafka. Saliendo...")
@@ -278,11 +278,11 @@ def handle_devices(data):
                 'devices': []
             }
 
-        devices = devices_by_location[id]['devices']
-        filtered_device = generate_filtered_device(data)
-        devices.append(filtered_device)
+        devices = devices_by_location[id]['devices'] # Obtener la lista de dispositivos
+        filtered_device = generate_filtered_device(data) # Filtrar los datos del dispositivo
+        devices.append(filtered_device) # Agregar el dispositivo a la lista de dispositivos
         mongo_locations_collection.insert_one(filtered_device)
-        socketio.emit('devices', [filtered_device])
+        socketio.emit('devices', [filtered_device]) # Emitir los datos del dispositivo a través de Socket.IO
 
     elif topic == 'datos':
         # Manejar los datos de 'datos'
@@ -339,19 +339,16 @@ def mysensors_produce():
         if sensor_info is not None:
             # Configuración del productor de Kafka
             kafka_producer_script = "/app/Producer (OpenAQ)/kafka-producer-mysensors.py"
-
             # Iniciar el proceso del productor con los argumentos necesarios
             subprocess.Popen(["python", kafka_producer_script, sensor_info['_id']])
-            app_logger.info(f"Productor de Kafka iniciado para el sensor {sensor_info['_id']}")
-            # Suscribirse al tema 'my_sensors' para recibir los datos del sensor
-            consumer.subscribe(['my_sensors'])
-            cons_logger.info(f"Consumidor suscrito al tema 'my_sensors' para el sensor {sensor_info['_id']}")
+            cns_logger.info(f"Productor de Kafka iniciado para el sensor {sensor_info['_id']}")
             time.sleep(10)
+            cons_logger.info(f"Consumidor suscrito al tema 'my_sensors' para el sensor {sensor_info['_id']}")
             data = consume_message()
-            app_logger.info("Datos en bruto", data)
+            app_logger.info("Datos en bruto %s", data)
             # Agregar una entrada en la nueva colección de MongoDB para el sensor
             data_filtered = generate_filtered_data(data)
-            app_logger.info("Datos filtrados", data_filtered)
+            app_logger.info("Datos filtrados %s", data_filtered)
             mongo_sensors_data_collection.insert_one(data_filtered)
 
             return {"status": "success", "message": f"Datos introducidos en tu colección de MongoDB para el sensor {sensor_id}"}
