@@ -30,7 +30,7 @@ def fetch_openaq_data(openaq_data_url):
         response = requests.get(openaq_data_url, headers={"X-API-Key": openaq_api_key})
 
         if response.status_code == 200:
-            return response.json()['results'][0]
+            return response.json().get('results', [])
         else:
             logger.error(f"Error al obtener datos de calidad del aire de OpenAQ. Código de estado: {response.status_code}")
             return None
@@ -57,6 +57,15 @@ while True:
         openaq_data = fetch_openaq_data(openaq_data_url)
 
         if openaq_data is not None:
+            for data_entry in openaq_data:
+                # Enviar datos al tema de Kafka
+                producer.produce(
+                    kafka_topic,
+                    key=None,
+                    value=json.dumps(data_entry).encode('utf-8'),
+                    callback=delivery_report
+                )
+                print("Enviando datos de calidad del aire a Kafka")
             # Enviar datos al tema de Kafka
             producer.produce(
                 kafka_topic,
