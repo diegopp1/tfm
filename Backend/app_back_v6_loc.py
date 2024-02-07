@@ -267,7 +267,7 @@ def handle_devices(data):
     id = data.get('id')
     country = data.get('country')
     topic = data.get('_topic')  # Obtener el topic
-
+    app_logger.info(f"Manejando datos de '{topic}'")
     if topic == 'locations':
         # Manejar los datos de 'locations'
         if id not in devices_by_location:
@@ -292,6 +292,13 @@ def handle_devices(data):
         if filtered_data['parameters']:
             mongo_air_quality_collection.insert_one(filtered_data)
             socketio.emit('air_quality_data', json.dumps(filtered_data))
+    elif topic == 'sensors':
+        # Manejar los datos de 'sensors'
+        data['_id'] = str(data.get('_id', ''))
+        filtered_sensor = generate_filtered_data(data)
+        mongo_sensors_collection.insert_one(filtered_sensor)
+        socketio.emit('sensors', json.dumps(filtered_sensor)) # Emitir los datos del sensor a través de Socket.IO
+
 @socketio.on('connect')
 def handle_connect():
     print('Cliente conectado')
@@ -330,7 +337,6 @@ def is_second_producer_running():
 @app.route('/start_mysensors_producer', methods=['POST'])
 def mysensors_produce():
     sensor_id = request.get_json().get('sensor_id')
-
     try:
         # Obtén la información del sensor desde MongoDB
         sensor_info = mongo_sensors_collection.find_one({"_id": sensor_id})
@@ -340,22 +346,16 @@ def mysensors_produce():
             kafka_producer_script = "/app/Producer (OpenAQ)/kafka-producer-mysensors.py"
             # Iniciar el proceso del productor con los argumentos necesarios
             subprocess.Popen(["python", kafka_producer_script, sensor_info['_id']])
-
-            cons_logger.info(f"Productor de Kafka iniciado para el sensor {sensor_info['_id']}")
+            # Loggear el inicio del productor
+            app_logger.info(f"Productor de Kafka iniciado para el sensor {sensor_info['_id']}")
             cons_logger.info(f"Consumidor suscrito al tema 'my_sensors' para el sensor {sensor_info['_id']}")
-            data = consume_message()
-            app_logger.info("Datos en bruto %s", data)
-            # Agregar una entrada en la nueva colección de MongoDB para el sensor
-            data_filtered = generate_filtered_data(data)
-            app_logger.info("Datos filtrados %s", data_filtered)
-            mongo_sensors_data_collection.insert_one(data_filtered)
-
-            return {"status": "success", "message": f"Datos introducidos en tu colección de MongoDB para el sensor {sensor_id}"}
         else:
-            return {"status": "error", "message": f"No se encontró información para el sensor {sensor_id}"}
+            app_logger.error(f"No se encontró el sensor con el ID {sensor_id}")
 
     except Exception as e:
-        return {"status": "error", "message": f"Error al iniciar el productor: {str(e)}"}
+        app_logger.error(f"Error al iniciar el productor de Kafka: {e}")
+
+    return redirect(url_for('my_sensors'))
 def calculate_average_by_country(collection):
     # Obtener la lista de países únicos presentes en la colección
     unique_countries = collection.distinct('country')
@@ -399,8 +399,6 @@ def calculate_average_by_country(collection):
         }
 
     return averages_by_country
-
-# ...
 
 def get_averages_with_coordinates(collection):
     # Obtener la información de coordenadas de cada país desde la colección 'countries'
