@@ -27,7 +27,7 @@ location_id = sys.argv[1]
 
 def fetch_openaq_data(location_id):
 
-    openaq_data_url = f"https://api.openaq.org/v2/latest/{location_id}?limit=1&page=1&offset=0&sort=asc"
+    openaq_data_url = f"https://api.openaq.org/v2/latest/{location_id}?limit=10&page=1&offset=0&sort=asc"
     print(openaq_data_url)
     try:
         response = requests.get(openaq_data_url, headers={"X-API-Key": openaq_api_key})
