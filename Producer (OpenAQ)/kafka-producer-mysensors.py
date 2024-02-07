@@ -22,21 +22,26 @@ kafka_topic = 'my_sensors'
 # API Key de OpenAQ (reemplaza 'your-openaq-api-key' con tu clave real)
 openaq_api_key = '83fcfc1c531d71a7290846eb31fd75b91a3f1cd85653f2fef21f5140e2371746'
 
-# URL base de la API de OpenAQ para obtener datos de calidad del aire por localización
-openaq_data_url_temp = "https://api.openaq.org/v2/latest?location_id={location_id}&limit=100&page=1&offset=0&sort=asc"
+# location_id
+location_id = sys.argv[1]
 
-def fetch_openaq_data(openaq_data_url):
+def fetch_openaq_data(location_id):
+
+    openaq_data_url = f"https://api.openaq.org/v2/latest/{location_id}?limit=1&page=1&offset=0&sort=asc"
+    print(openaq_data_url)
     try:
         response = requests.get(openaq_data_url, headers={"X-API-Key": openaq_api_key})
 
         if response.status_code == 200:
             return response.json().get('results', [])
         else:
-            logger.error(f"Error al obtener datos de calidad del aire de OpenAQ. Código de estado: {response.status_code}")
+            logger.error(
+                f"Error al obtener datos de calidad del aire de OpenAQ. Código de estado: {response.status_code}")
             return None
     except Exception as e:
         logger.error(f"Error en la solicitud a la API de OpenAQ: {e}")
         return None
+
 
 def delivery_report(err, msg):
     if err is not None:
@@ -46,15 +51,12 @@ def delivery_report(err, msg):
         # Imprimir el contenido del mensaje (clave y valor)
         logger.info('Contenido del mensaje: Key: {}, Value: {}'.format(msg.key(), msg.value()))
 
+
 # Bucle principal para enviar datos de OpenAQ al tema de Kafka
 while True:
     try:
-        # location_id
-        location_id = sys.argv[1]
-        # url
-        openaq_data_url = openaq_data_url_temp.format(location_id=location_id)
         # Obtener datos de calidad del aire de OpenAQ
-        openaq_data = fetch_openaq_data(openaq_data_url)
+        openaq_data = fetch_openaq_data(location_id)
 
         if openaq_data is not None:
             for data_entry in openaq_data:
