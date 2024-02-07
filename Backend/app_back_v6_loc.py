@@ -341,12 +341,13 @@ def mysensors_produce():
             kafka_producer_script = "/app/Producer (OpenAQ)/kafka-producer-mysensors.py"
 
             # Iniciar el proceso del productor con los argumentos necesarios
-            subprocess.Popen(["python", kafka_producer_script, sensor_info["_id"]])
+            subprocess.Popen(["python", kafka_producer_script, sensor_info['_id']])
             app_logger.info(f"Productor de Kafka iniciado para el sensor {sensor_info['_id']}")
             # Suscribirse al tema 'my_sensors' para recibir los datos del sensor
             consumer.subscribe(['my_sensors'])
             cons_logger.info(f"Consumidor suscrito al tema 'my_sensors' para el sensor {sensor_info['_id']}")
             data = consume_message()
+            app_logger.info(data)
             # Agregar una entrada en la nueva colección de MongoDB para el sensor
             data_filtered = generate_filtered_data(data)
             app_logger.info(data_filtered)
