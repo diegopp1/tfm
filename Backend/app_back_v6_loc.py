@@ -90,7 +90,7 @@ def generate_filtered_device(data):
 
 def generate_filtered_data(data):
     return {
-        'location': data.get('name'),
+        'location': data.get('location'),
         'country': data.get('country'),
         'parameters': [
             {
@@ -211,33 +211,43 @@ def world_map():
 def get_map_data():
     averages_with_coordinates = get_averages_with_coordinates(mongo_locations_collection)
     return jsonify(averages_with_coordinates)
-
-
 @app.route('/data')
 def data():
-    # Obtener valores únicos para los campos que quieres comparar
-    unique_locations = mongo_locations_collection.distinct('location')
-    unique_countries = mongo_locations_collection.distinct('country')
-    unique_last_updated = mongo_locations_collection.distinct('lastUpdated')
+    # Eliminar duplicados directamente desde la colección
+    pipeline = [
+        {
+            '$group': {
+                '_id': {
+                    'name': '$name',
+                    'country': '$country',
+                    'lastUpdated': '$lastUpdated'
+                },
+                'document': {'$first': '$$ROOT'}
+            }
+        },
+        {
+            '$replaceRoot': {'newRoot': '$document'}
+        }
+    ]
 
-    # Filtrar la colección para evitar duplicados
-    filtered_data = []
-    for location in unique_locations:
-        for country in unique_countries:
-            for last_updated in unique_last_updated:
-                # Consulta para encontrar documentos que coincidan con los valores únicos
-                query = {
-                    'location': location,
-                    'country': country,
-                    'lastUpdated': last_updated
-                }
-                document = mongo_locations_collection.find_one(query)
-                if document:
-                    filtered_data.append(document)
+    try:
+        result = list(mongo_locations_collection.aggregate(pipeline))
+        app_logger.info(f"Number of documents after aggregation: {len(result)}")
+        diff = len(mongo_locations_collection.distinct('_id')) - len(result)
+        app_logger.warning(f"Number of duplicates to be removed: {diff}")
+        # Verificar si hay duplicados antes de eliminar e insertar
+        if diff > 0:
+            mongo_locations_collection.delete_many({})
+            mongo_locations_collection.insert_many(result)
+            app_logger.warning("Duplicates removed and inserted.")
+        else:
+            app_logger.info("No duplicates found.")
 
-    return render_template('data.html', stored_data=filtered_data)
+    except Exception as e:
+        app_logger.error(f"Error during aggregation: {e}")
+        return jsonify(error=str(e))
 
-
+    return render_template('data.html', stored_data=result)
 @app.route('/perform_search', methods=['POST'])
 def perform_search():
     search_input = request.json.get('searchInput', '')
