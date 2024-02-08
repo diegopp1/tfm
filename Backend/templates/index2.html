@@ -113,7 +113,7 @@
                 <p><strong>Measurements:</strong></p>
                 <ul>
                     {% for parameter in latest_sensor.parameters %}
-                        <li>{{ parameter.id}}: {{ parameter.value }} {{ parameter.unit }}. Last Updated: {{ parameter.lastUpdated }}</li>
+                        <li><span style="color: red; font-weight:bold;">{{ parameter.id}}</span>: {{ parameter.value }} {{ parameter.unit }}. Last Updated: {{ parameter.lastUpdated }}</li>
                     {% endfor %}
                 </ul>
             </div>
