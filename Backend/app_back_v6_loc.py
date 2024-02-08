@@ -318,6 +318,44 @@ def remove_sensor():
         app_logger.error(f"Error al eliminar el sensor: {e}")
         return jsonify({'error': 'Error interno del servidor.'}), 500
 
+@app.route('/graph_mysensors', methods=['GET', 'POST'])
+def graph_mysensors():
+    if request.method == 'POST':
+        y_axis_field = request.form.get('y-axis-field')
+
+        # Lista de parámetros que quieres incluir en la gráfica
+        y_parameters = ['pm10', 'pm25', 'um100']
+
+        # Obtener los datos relevantes de la colección
+        data_cursor = mongo_sensors_data_collection.find({}, {'location': 1, 'parameters': 1, '_id': 0})
+        data_list = []
+
+        for entry in data_cursor:
+            try:
+                # Crear un nuevo diccionario con los valores específicos
+                new_entry = {'location': entry.get('location')}
+
+                # Obtener la última fecha (lastUpdated) para el eje X
+                last_updated_dates = [datetime.strptime(param.get('lastUpdated', ''), '%Y-%m-%dT%H:%M:%S%z')
+                                      for param in entry.get('parameters', []) if param.get('id') in y_parameters]
+
+                new_entry['lastUpdated'] = max(last_updated_dates).strftime('%Y-%m-%d %H:%M:%S')
+
+                # Agregar los valores de cada parámetro al diccionario
+                for param_id in y_parameters:
+                    value = next(
+                        (param.get('value') for param in entry.get('parameters', []) if param.get('id') == param_id), 0)
+                    new_entry[param_id] = value
+
+                data_list.append(new_entry)
+            except KeyError as e:
+                print(f"KeyError: {e} - Ignorando la entrada sin el valor correspondiente.")
+
+        # Renderizar la plantilla HTML y pasar los datos a la misma
+        return render_template('graph_mysensors.html', data_list=data_list)
+
+    # Si se recibe una solicitud GET, puedes manejarla según tus necesidades
+    return render_template('graph_mysensors.html')
 
 def handle_devices(data):
     topic = data.get('_topic')  # Obtener el topic
