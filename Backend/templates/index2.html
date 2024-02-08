@@ -48,35 +48,39 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
+
         .latest-sensor-box {
             background-color: #e6f7ff; /* Fondo del recuadro */
             border: 1px solid #4da6ff; /* Borde del recuadro */
             border-radius: 10px; /* Bordes redondeados */
             padding: 15px; /* Espaciado interno */
             margin-top: 20px; /* Espaciado superior */
+            margin-right: 920px; /* Espaciado derecho */
+            margin-left: 920px; /* Espaciado izquierdo */
+            text-align: center; /* Alineación del texto */
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Sombra para efecto elevado */
-            }
+        }
 
         .latest-sensor-box h2 {
             color: #0066cc; /* Color del título */
-            }
+        }
 
         .latest-sensor-content {
             margin-top: 10px; /* Espaciado superior para el contenido */
-            }
+        }
 
         .latest-sensor-content p {
             margin-bottom: 5px; /* Espaciado inferior para los párrafos */
-            }
+        }
 
         .latest-sensor-content ul {
             list-style-type: none; /* Quitar viñetas de la lista */
             padding: 0; /* Quitar relleno de la lista */
-            }
+        }
 
         .latest-sensor-content ul li {
             margin-bottom: 5px; /* Espaciado inferior para los elementos de la lista */
-            }
+        }
     </style>
 </head>
 
@@ -99,21 +103,24 @@
         <h2>Welcome to the Air Quality App!</h2>
         <p>Please select an option from the menu above to explore the air quality data extracted from different sensors placed around the world</p>
     </div>
-<div class="latest-sensor">
-    <h2>Latest Sensor Data</h2>
-    {% if latest_sensor %}
-        <p><strong>Location:</strong> {{ latest_sensor.location}}</p>
-        <p><strong>Country:</strong> {{ latest_sensor.country }}</p>
-        <p><strong>Measurements:</strong></p>
-        <ul>
-            {% for parameter in latest_sensor.parameters %}
-                <li>{{ parameter.id}}: {{ parameter.value }} {{ parameter.unit }} / {{ parameter.lastUpdated|format('%Y-%m-%d %H:%M:%S') }}</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No sensor data available.</p>
-    {% endif %}
-</div>
+
+    <div class="latest-sensor-box">
+        <h2>Latest Sensor Data</h2>
+        {% if latest_sensor %}
+            <div class="latest-sensor-content">
+                <p><strong>Location:</strong> {{ latest_sensor.location}}</p>
+                <p><strong>Country:</strong> {{ latest_sensor.country }}</p>
+                <p><strong>Measurements:</strong></p>
+                <ul>
+                    {% for parameter in latest_sensor.parameters %}
+                        <li>{{ parameter.id}}: {{ parameter.value }} {{ parameter.unit }} </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% else %}
+            <p>No sensor data available.</p>
+        {% endif %}
+    </div>
 </body>
 
 </html>
