@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Chart</title>
+</head>
+<body>
+    <h1>Select a Sensor and Parameter to Chart</h1>
+
+    <form action="/generate_sensor_chart" method="post">
+        <label for="sensor">Choose a Sensor:</label>
+        <select name="sensor" id="sensor">
+            {% for sensor in sensors_list %}
+                <option value="{{ sensor.location }}">{{ sensor.location }} - {{ sensor.country }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="parameter">Choose a Parameter:</label>
+        <select name="parameter" id="parameter">
+            <option value="pm10">PM10</option>
+            <option value="pm25">PM2.5</option>
+            <option value="um100">UM100</option>
+        </select>
+
+        <input type="submit" value="Generate Chart">
+    </form>
+</body>
+</html>
