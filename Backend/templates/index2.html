@@ -73,13 +73,12 @@
 <div class="latest-sensor">
     <h2>Latest Sensor Data</h2>
     {% if latest_sensor %}
-        <p><strong>Location:</strong> {{ latest_sensor.name }}</p>
+        <p><strong>Location:</strong> {{ latest_sensor.location}}</p>
         <p><strong>Country:</strong> {{ latest_sensor.country }}</p>
-        <p><strong>Last Updated:</strong> {{ latest_sensor.lastUpdated | datetime }}</p>
         <p><strong>Measurements:</strong></p>
         <ul>
             {% for parameter in latest_sensor.parameters %}
-                <li>{{ parameter.parameter }}: {{ parameter.lastValue }} {{ parameter.unit }}</li>
+                <li>{{ parameter.id}}: {{ parameter.value }} {{ parameter.unit }} / {{ parameter.lastUpdated }}</li>
             {% endfor %}
         </ul>
     {% else %}
