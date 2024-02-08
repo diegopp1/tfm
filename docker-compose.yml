@@ -35,7 +35,7 @@ services:
       bash -c "/etc/confluent/docker/run &&
       kafka-topics --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 2 --topic locations &&
       kafka-topics --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 2 --topic datos
-      "
+      kafka-topics --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 2 --topic my_sensors"
   # Kafka Manager GUI to configure Kafka
   kafka_manager:
     image: deltaprojects/kafka-manager:v3.0.0.6-2
@@ -72,7 +72,7 @@ services:
       - "5000:5000"
     depends_on:
       - broker
-
+    command: bash -c "sleep 30 && python Backend/app_back_v6_loc.py"
 
 networks:
   default:

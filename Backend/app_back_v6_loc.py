@@ -242,7 +242,6 @@ def data():
             app_logger.warning("Duplicates removed and inserted.")
         else:
             app_logger.info("No duplicates found.")
-
     except Exception as e:
         app_logger.error(f"Error during aggregation: {e}")
         return jsonify(error=str(e))
