@@ -1,4 +1,4 @@
-import time
+from datetime import datetime
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_socketio import SocketIO, emit
 from confluent_kafka import Consumer, KafkaException
@@ -182,6 +182,13 @@ def index():
         producer_running = True
 
     latest_sensor = mongo_air_quality_collection.find_one({}, sort=[('_id', -1)])
+    if 'parameters' in latest_sensor:
+        # Convertir 'lastUpdated' para cada parámetro
+        for parameter in latest_sensor['parameters']:
+            if 'lastUpdated' in parameter:
+                parameter['lastUpdated'] = datetime.strptime(parameter['lastUpdated'], '%Y-%m-%dT%H:%M:%S%z').strftime(
+                    '%Y-%m-%d %H:%M:%S')
+
     return render_template('index2.html', latest_sensor=latest_sensor)
 
 
