@@ -107,7 +107,7 @@
         <p><strong>Measurements:</strong></p>
         <ul>
             {% for parameter in latest_sensor.parameters %}
-                <li>{{ parameter.id}}: {{ parameter.value }} {{ parameter.unit }} / {{ parameter.lastUpdated|datetimeformat('%Y-%m-%d %H:%M:%S') }}</li>
+                <li>{{ parameter.id}}: {{ parameter.value }} {{ parameter.unit }} / {{ parameter.lastUpdated|format('%Y-%m-%d %H:%M:%S') }}</li>
             {% endfor %}
         </ul>
     {% else %}
