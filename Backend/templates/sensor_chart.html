@@ -66,25 +66,23 @@
 
     <div class="container">
         <h1>Select a Sensor and Parameter to Chart</h1>
+            <form id="chart-form" style="margin-top: 20px;">
+                <label for="sensor" style="font-size: 18px; margin-right: 10px;">Choose a Sensor:</label>
+                <select name="sensor" id="sensor" style="padding: 8px; font-size: 16px;">
+                    {% for sensor in sensors_list %}
+                        <option value="{{ sensor.location }}">{{ sensor.location }} - {{ sensor.country }}</option>
+                    {% endfor %}
+                </select>
 
-        <form id="chart-form">
-            <label for="sensor">Choose a Sensor:</label>
-            <select name="sensor" id="sensor">
-                {% for sensor in sensors_list %}
-                    <option value="{{ sensor.location }}">{{ sensor.location }} - {{ sensor.country }}</option>
-                {% endfor %}
-            </select>
+                <label for="parameter" style="font-size: 18px; margin-left: 20px; margin-right: 10px;">Choose a Parameter:</label>
+                <select name="parameter" id="parameter" style="padding: 8px; font-size: 16px;">
+                    <option value="pm10">PM10</option>
+                    <option value="pm25">PM2.5</option>
+                    <option value="um100">UM100</option>
+                </select>
 
-            <label for="parameter">Choose a Parameter:</label>
-            <select name="parameter" id="parameter">
-                <option value="pm10">PM10</option>
-                <option value="pm25">PM2.5</option>
-                <option value="um100">UM100</option>
-            </select>
-
-            <input type="button" value="Generate Chart" onclick="generateChart()">
-        </form>
-
+                <input type="button" value="Generate Graph" onclick="generateChart()" style="padding: 10px; font-size: 16px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 20px;margin-top: 20px">
+            </form>
         <!-- Contenedor para el gráfico -->
         <div id="chart-container"></div>
     </div>
