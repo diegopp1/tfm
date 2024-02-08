@@ -4,26 +4,125 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sensor Chart</title>
+    <!-- Incluye la biblioteca de Plotly -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI';
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            color: #000;
+        }
+
+        header {
+            background-color: #7fff7f;
+            padding: 1em;
+            text-align: center;
+            color: #000;
+        }
+
+        nav {
+            background-color: #a9ffa9;
+            padding: 0.5em;
+            text-align: center;
+        }
+
+        nav a {
+            color: #000;
+            text-decoration: none;
+            padding: 1em;
+            margin: 0 0.5em;
+            display: inline-block;
+            border: 1px solid #000;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 2em auto;
+            padding: 1em;
+            background-color: #d9ffd9;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-    <h1>Select a Sensor and Parameter to Chart</h1>
+    <header>
+        <h1>Sensor Chart</h1>
+    </header>
 
-    <form action="/generate_sensor_chart" method="post">
-        <label for="sensor">Choose a Sensor:</label>
-        <select name="sensor" id="sensor">
-            {% for sensor in sensors_list %}
-                <option value="{{ sensor.location }}">{{ sensor.location }} - {{ sensor.country }}</option>
-            {% endfor %}
-        </select>
+    <nav>
+        <a href="/locations">Generate Data</a>
+        <a href="/graph">Graph</a>
+        <a href="/worldmap">World Map</a>
+        <a href="/data">Stored Data</a>
+        <a href="/my_sensors">My Sensors</a>
+    </nav>
 
-        <label for="parameter">Choose a Parameter:</label>
-        <select name="parameter" id="parameter">
-            <option value="pm10">PM10</option>
-            <option value="pm25">PM2.5</option>
-            <option value="um100">UM100</option>
-        </select>
+    <div class="container">
+        <h1>Select a Sensor and Parameter to Chart</h1>
 
-        <input type="submit" value="Generate Chart">
-    </form>
+        <form id="chart-form">
+            <label for="sensor">Choose a Sensor:</label>
+            <select name="sensor" id="sensor">
+                {% for sensor in sensors_list %}
+                    <option value="{{ sensor.location }}">{{ sensor.location }} - {{ sensor.country }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="parameter">Choose a Parameter:</label>
+            <select name="parameter" id="parameter">
+                <option value="pm10">PM10</option>
+                <option value="pm25">PM2.5</option>
+                <option value="um100">UM100</option>
+            </select>
+
+            <input type="button" value="Generate Chart" onclick="generateChart()">
+        </form>
+
+        <!-- Contenedor para el gráfico -->
+        <div id="chart-container"></div>
+    </div>
+
+    <script>
+        function generateChart() {
+            // Obtener los valores seleccionados
+            var sensor = document.getElementById("sensor").value;
+            var parameter = document.getElementById("parameter").value;
+
+            // Realizar la solicitud al servidor para obtener los datos
+            fetch('/generate_sensor_chart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'sensor=' + encodeURIComponent(sensor) + '&parameter=' + encodeURIComponent(parameter),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Convertir la cadena JSON a objetos
+                var jsonData = JSON.parse(JSON.stringify(data));
+
+                // Crear listas para el eje X y el eje Y
+                var xValues = jsonData.map(entry => entry.lastUpdated);
+                var yValues = jsonData.map(entry => entry.value);
+
+                // Configurar el diseño del gráfico
+                var layout = {
+                    title: 'Sensor Data Chart',
+                    xaxis: { title: 'Last Updated' },
+                    yaxis: { title: parameter },
+                };
+
+                // Crear el gráfico usando Plotly
+                Plotly.newPlot('chart-container', [{ x: xValues, y: yValues }], layout);
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
 </body>
 </html>

@@ -121,6 +121,47 @@ def get_available_fields():
     # Devolver las opciones específicas para los ejes X e Y
     return ['name', 'lastUpdated', 'country', 'lastValue(pm10)', 'lastValue(pm25)', 'lastValue(um100)']
 
+@app.route('/graph')
+def graph():
+    # Obtener los campos disponibles para los ejes X e Y
+    available_fields = get_available_fields()
+    return render_template('graph.html', available_fields=available_fields)
+@app.route('/get_graph_data', methods=['POST'])
+def get_graph_data():
+    x_axis_field = request.form.get('x-axis-field')
+    y_axis_field = request.form.get('y-axis-field')
+    # Lista de parámetros que quieres incluir en la gráfica
+    y_parameters = ['pm10', 'pm25', 'um100']
+    print(f"Selected X-axis: {x_axis_field}, Y-axis: {y_axis_field}")
+    # Si el eje X es 'country' y el eje Y es pm10, pm25 o um100
+    if x_axis_field == 'country' and any(y_axis_field.endswith(f'({param})') for param in y_parameters):
+        averages_by_country = calculate_average_by_country(mongo_locations_collection)
+        print(averages_by_country)
+        return jsonify(averages_by_country)
+    # Si el eje X es 'name', proceder con la lógica original
+    elif x_axis_field == 'name':
+        # Ajustar la consulta para incluir solo 'name' y 'parameters' en la proyección
+        data_cursor = mongo_locations_collection.find(
+            {'name': {"$exists": True}, 'parameters': {"$exists": True}},
+            {'name': 1, 'parameters': 1, '_id': 0}
+        )
+        data_list = []
+        for entry in data_cursor:
+            try:
+                # Crear un nuevo diccionario con los valores específicos
+                new_entry = {'name': entry.get('name')}
+                # Agregar los valores de cada parámetro al diccionario
+                for param in y_parameters:
+                    value = next(
+                        (p.get('lastValue', 0) for p in entry.get('parameters', []) if p.get('parameter') == param), 0)
+                    new_entry[f'lastValue({param})'] = value
+                data_list.append(new_entry)
+            except KeyError as e:
+                print(f"KeyError: {e} - Ignorando la entrada sin el valor correspondiente.")
+        return jsonify(data_list)
+    # Manejar otros casos o devolver un mensaje de error si es necesario
+    else:
+        return jsonify({'error': 'Invalid request. Please select valid axes.'})
 @app.route('/sensor_chart')
 def sensor_chart():
     # Obtener la lista de sensores disponibles
@@ -148,6 +189,7 @@ def generate_sensor_chart():
         data_list.append({'lastUpdated': last_updated, 'value': value})
 
     return jsonify(data_list)
+
 @app.route('/')
 def index():
     global producer_running
