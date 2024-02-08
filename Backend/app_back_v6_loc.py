@@ -180,7 +180,9 @@ def index():
     if not producer_running:
         start_producer()
         producer_running = True
-    return render_template('index2.html')
+
+    latest_sensor = mongo_air_quality_collection.find_one({}, sort=[('_id', -1)])
+    return render_template('index2.html', latest_sensor=latest_sensor)
 
 
 @app.route('/locations')

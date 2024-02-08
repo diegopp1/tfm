@@ -70,6 +70,22 @@
         <h2>Welcome to the Air Quality App!</h2>
         <p>Please select an option from the menu above to explore the air quality data extracted from different sensors placed around the world</p>
     </div>
+<div class="latest-sensor">
+    <h2>Latest Sensor Data</h2>
+    {% if latest_sensor %}
+        <p><strong>Location:</strong> {{ latest_sensor.name }}</p>
+        <p><strong>Country:</strong> {{ latest_sensor.country }}</p>
+        <p><strong>Last Updated:</strong> {{ latest_sensor.lastUpdated | datetime }}</p>
+        <p><strong>Measurements:</strong></p>
+        <ul>
+            {% for parameter in latest_sensor.parameters %}
+                <li>{{ parameter.parameter }}: {{ parameter.lastValue }} {{ parameter.unit }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No sensor data available.</p>
+    {% endif %}
+</div>
 </body>
 
 </html>
