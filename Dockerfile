@@ -17,4 +17,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 5000
 
 # Especifica el comando por defecto a ejecutar cuando se inicia el contenedor
-CMD ["python", "Backend/app_back_v6_loc.py", "--host=0.0.0.0"]]
+CMD ["python", "Backend/app_back_v6_loc.py", "--host=0.0.0.0"]
