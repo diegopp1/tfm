@@ -140,26 +140,43 @@ def get_graph_data():
         return jsonify(averages_by_country)
     # Si el eje X es 'name', proceder con la lógica original
     elif x_axis_field == 'name':
-        # Ajustar la consulta para incluir solo 'name' y 'parameters' en la proyección
-        data_cursor = mongo_locations_collection.find(
-            {'name': {"$exists": True}, 'parameters': {"$exists": True}},
-            {'name': 1, 'parameters': 1, '_id': 0}
-        )
+        # Modify the query to sort by 'lastUpdated' within parameters and return the latest entry for each 'name'
+        pipeline = [
+            {"$match": {"name": {"$exists": True}}},
+            {"$unwind": "$parameters"},
+            {"$match": {"parameters.parameter": {"$in": y_parameters}}},
+            {"$sort": {"parameters.lastUpdated": -1}},
+            {"$group": {
+                "_id": {"name": "$name", "parameter": "$parameters.parameter"},
+                "lastValue": {"$first": "$parameters.lastValue"}
+            }},
+            {"$group": {
+                "_id": "$_id.name",
+                "parameters": {
+                    "$push": {
+                        "parameter": "$_id.parameter",
+                        "lastValue": "$lastValue"
+                    }
+                }
+            }},
+            {"$project": {
+                "name": "$_id",
+                "parameters": 1,
+                "_id": 0
+            }}
+        ]
+        data_cursor = mongo_locations_collection.aggregate(pipeline)
         data_list = []
         for entry in data_cursor:
-            try:
-                # Crear un nuevo diccionario con los valores específicos
-                new_entry = {'name': entry.get('name')}
-                # Agregar los valores de cada parámetro al diccionario
-                for param in y_parameters:
-                    value = next(
-                        (p.get('lastValue', 0) for p in entry.get('parameters', []) if p.get('parameter') == param), 0)
-                    new_entry[f'lastValue({param})'] = value
-                data_list.append(new_entry)
-            except KeyError as e:
-                print(f"KeyError: {e} - Ignorando la entrada sin el valor correspondiente.")
+            new_entry = {'name': entry['name']}
+            # Convert the parameters list to a dictionary for easy access
+            params_dict = {p['parameter']: p['lastValue'] for p in entry['parameters']}
+            # Now you can directly get the last value using the parameter name
+            for param in y_parameters:
+                param_key = f"lastValue({param})"
+                new_entry[param_key] = params_dict.get(param, 0)
+            data_list.append(new_entry)
         return jsonify(data_list)
-    # Manejar otros casos o devolver un mensaje de error si es necesario
     else:
         return jsonify({'error': 'Invalid request. Please select valid axes.'})
 @app.route('/sensor_chart')
