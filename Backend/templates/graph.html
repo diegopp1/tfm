@@ -189,8 +189,8 @@
                         const yValues = Array.isArray(data) ? data.map(entry => entry[yAxisField]) : [data[yAxisField]];
                         const paramName = yAxisField.match(/\(([^)]+)\)/)[1];
                         const thresholds = {
-                            pm10: 20,
-                            pm25: 10,
+                            pm10: 50, // Acorde a la OMS para un periodo de 24 horas
+                            pm25: 25,
                             um100: 0.01
                         };
 
