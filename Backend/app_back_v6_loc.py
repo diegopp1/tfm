@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, Response
 from flask_socketio import SocketIO, emit
 from confluent_kafka import Consumer, KafkaException
 from pymongo.mongo_client import MongoClient
@@ -10,7 +10,7 @@ from decouple import config
 from bson import json_util
 from statistics import mean
 import os
-
+from functools import wraps
 app = Flask(__name__)
 socketio = SocketIO(app, threaded=True)
 
@@ -56,158 +56,26 @@ except KafkaException as e:
 devices_by_location = {}
 selected_country = 'US'
 
+# Hardcoded credentials for the single user
+USERNAME = 'admin'
+PASSWORD = 'admin'
 
-def consume_message():
-    try:
-        msg = consumer.poll(1.0)
-        if msg is not None and not msg.error():
-            topic = msg.topic()
-            data = json.loads(msg.value().decode('utf-8'))
-            if isinstance(data, dict):
-                cons_logger.info("Datos recibidos del tema {}: {}".format(topic, data))
-                data['_topic'] = topic  # Añadir el topic al diccionario
-                return data
-            else:
-                cons_logger.warning("Datos no válidos recibidos del tema {}: {}".format(topic, data))
-    except Exception as e:
-        cons_logger.error(f"Error al procesar mensaje de Kafka: {e}")
-    return None
+# Function to check if the provided credentials are correct
+def check_credentials(username, password):
+    return username == USERNAME and password == PASSWORD
 
-
-def generate_filtered_device(data):
-    return {
-        'id': data.get('id'),
-        'name': data.get('name'),
-        'country': data.get('country'),
-        'lastUpdated': data.get('lastUpdated'),
-        'parameters': [
-            param for param in data.get('parameters', [])
-            if param.get('id') in [1, 2, 135]  # Filtrar por ID 1, 2 y 135
-        ],
-        'coordinates': data.get('coordinates')
-    }
-
-
-def generate_filtered_data(data):
-    return {
-        'location': data.get('location'),
-        'country': data.get('country'),
-        'parameters': [
-            {
-                'id': param.get('parameter'),  # Usar 'parameter' en lugar de 'id' si es el campo correcto
-                'value': param.get('value'),
-                'unit': param.get('unit'),
-                'lastUpdated': param.get('lastUpdated')
-            }
-            for param in data.get('measurements', [])  # Ajustar al nombre correcto de los datos de 'my_sensors'
-        ],
-        'coordinates': data.get('coordinates')
-    }
-
-
-def background_thread():
-    try:
-        while True:
-            data = consume_message()
-            if data is not None:
-                socketio.emit('air_quality_data', data)
-                handle_devices(data)
-                socketio.sleep(1)
-    except Exception as e:
-        cons_logger.error(f"Error en el hilo principal: {e}")
-
-
-def get_available_fields():
-    # Devolver las opciones específicas para los ejes X e Y
-    return ['name', 'lastUpdated', 'country', 'lastValue(pm10)', 'lastValue(pm25)', 'lastValue(um100)']
-
-@app.route('/graph')
-def graph():
-    # Obtener los campos disponibles para los ejes X e Y
-    available_fields = get_available_fields()
-    return render_template('graph.html', available_fields=available_fields)
-@app.route('/get_graph_data', methods=['POST'])
-def get_graph_data():
-    x_axis_field = request.form.get('x-axis-field')
-    y_axis_field = request.form.get('y-axis-field')
-    # Lista de parámetros que quieres incluir en la gráfica
-    y_parameters = ['pm10', 'pm25', 'um100']
-    print(f"Selected X-axis: {x_axis_field}, Y-axis: {y_axis_field}")
-    # Si el eje X es 'country' y el eje Y es pm10, pm25 o um100
-    if x_axis_field == 'country' and any(y_axis_field.endswith(f'({param})') for param in y_parameters):
-        averages_by_country = calculate_average_by_country(mongo_locations_collection)
-        print(averages_by_country)
-        return jsonify(averages_by_country)
-    # Si el eje X es 'name', proceder con la lógica original
-    elif x_axis_field == 'name':
-        # Modify the query to sort by 'lastUpdated' within parameters and return the latest entry for each 'name'
-        pipeline = [
-            {"$match": {"name": {"$exists": True}}},
-            {"$unwind": "$parameters"},
-            {"$match": {"parameters.parameter": {"$in": y_parameters}}},
-            {"$sort": {"parameters.lastUpdated": -1}},
-            {"$group": {
-                "_id": {"name": "$name", "parameter": "$parameters.parameter"},
-                "lastValue": {"$first": "$parameters.lastValue"}
-            }},
-            {"$group": {
-                "_id": "$_id.name",
-                "parameters": {
-                    "$push": {
-                        "parameter": "$_id.parameter",
-                        "lastValue": "$lastValue"
-                    }
-                }
-            }},
-            {"$project": {
-                "name": "$_id",
-                "parameters": 1,
-                "_id": 0
-            }}
-        ]
-        data_cursor = mongo_locations_collection.aggregate(pipeline)
-        data_list = []
-        for entry in data_cursor:
-            new_entry = {'name': entry['name']}
-            # Convert the parameters list to a dictionary for easy access
-            params_dict = {p['parameter']: p['lastValue'] for p in entry['parameters']}
-            # Now you can directly get the last value using the parameter name
-            for param in y_parameters:
-                param_key = f"lastValue({param})"
-                new_entry[param_key] = params_dict.get(param, 0)
-            data_list.append(new_entry)
-        return jsonify(data_list)
-    else:
-        return jsonify({'error': 'Invalid request. Please select valid axes.'})
-@app.route('/sensor_chart')
-def sensor_chart():
-    # Obtener la lista de sensores disponibles
-    sensors_list = list(mongo_sensors_collection.find({}, {'_id': 1, 'location': 1, 'country': 1}))
-
-    return render_template('sensor_chart.html', sensors_list=sensors_list)
-
-@app.route('/generate_sensor_chart', methods=['POST'])
-def generate_sensor_chart():
-    location = request.form.get('sensor')
-    parameter_id = request.form.get('parameter')
-    print(f"Sensor: {location}, Parameter: {parameter_id}")
-    # Convertir lastUpdated a formato datetime durante la consulta
-    data_cursor = mongo_sensors_data_collection.find(
-        {'location': location, 'parameters.id': parameter_id},
-        {'parameters.$': 1, '_id': 0}
-    ).sort('parameters.lastUpdated', 1)
-    print(data_cursor)
-    data_list = []
-
-    for entry in data_cursor:
-        parameter = entry['parameters'][0]
-        value = parameter.get('value', 0)
-        last_updated = parameter.get('lastUpdated', 0)
-        data_list.append({'lastUpdated': last_updated, 'value': value})
-
-    return jsonify(data_list)
+# Define your require_authentication decorator function
+def require_authentication(func):
+    @wraps(func)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_credentials(auth.username, auth.password):
+            return Response('Authentication required', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
+        return func(*args, **kwargs)
+    return decorated
 
 @app.route('/')
+@require_authentication
 def index():
     global producer_running
     if not producer_running:
@@ -389,7 +257,154 @@ def graph_mysensors():
 
     # Si se recibe una solicitud GET, puedes manejarla según tus necesidades
     return render_template('sensor_chart.html')
+@app.route('/graph')
+def graph():
+    # Obtener los campos disponibles para los ejes X e Y
+    available_fields = get_available_fields()
+    return render_template('graph.html', available_fields=available_fields)
+@app.route('/get_graph_data', methods=['POST'])
+def get_graph_data():
+    x_axis_field = request.form.get('x-axis-field')
+    y_axis_field = request.form.get('y-axis-field')
+    # Lista de parámetros que quieres incluir en la gráfica
+    y_parameters = ['pm10', 'pm25', 'um100']
+    print(f"Selected X-axis: {x_axis_field}, Y-axis: {y_axis_field}")
+    # Si el eje X es 'country' y el eje Y es pm10, pm25 o um100
+    if x_axis_field == 'country' and any(y_axis_field.endswith(f'({param})') for param in y_parameters):
+        averages_by_country = calculate_average_by_country(mongo_locations_collection)
+        print(averages_by_country)
+        return jsonify(averages_by_country)
+    # Si el eje X es 'name', proceder con la lógica original
+    elif x_axis_field == 'name':
+        # Modify the query to sort by 'lastUpdated' within parameters and return the latest entry for each 'name'
+        pipeline = [
+            {"$match": {"name": {"$exists": True}}},
+            {"$unwind": "$parameters"},
+            {"$match": {"parameters.parameter": {"$in": y_parameters}}},
+            {"$sort": {"parameters.lastUpdated": -1}},
+            {"$group": {
+                "_id": {"name": "$name", "parameter": "$parameters.parameter"},
+                "lastValue": {"$first": "$parameters.lastValue"}
+            }},
+            {"$group": {
+                "_id": "$_id.name",
+                "parameters": {
+                    "$push": {
+                        "parameter": "$_id.parameter",
+                        "lastValue": "$lastValue"
+                    }
+                }
+            }},
+            {"$project": {
+                "name": "$_id",
+                "parameters": 1,
+                "_id": 0
+            }}
+        ]
+        data_cursor = mongo_locations_collection.aggregate(pipeline)
+        data_list = []
+        for entry in data_cursor:
+            new_entry = {'name': entry['name']}
+            # Convert the parameters list to a dictionary for easy access
+            params_dict = {p['parameter']: p['lastValue'] for p in entry['parameters']}
+            # Now you can directly get the last value using the parameter name
+            for param in y_parameters:
+                param_key = f"lastValue({param})"
+                new_entry[param_key] = params_dict.get(param, 0)
+            data_list.append(new_entry)
+        return jsonify(data_list)
+    else:
+        return jsonify({'error': 'Invalid request. Please select valid axes.'})
+@app.route('/sensor_chart')
+def sensor_chart():
+    # Obtener la lista de sensores disponibles
+    sensors_list = list(mongo_sensors_collection.find({}, {'_id': 1, 'location': 1, 'country': 1}))
 
+    return render_template('sensor_chart.html', sensors_list=sensors_list)
+
+@app.route('/generate_sensor_chart', methods=['POST'])
+def generate_sensor_chart():
+    location = request.form.get('sensor')
+    parameter_id = request.form.get('parameter')
+    print(f"Sensor: {location}, Parameter: {parameter_id}")
+    # Convertir lastUpdated a formato datetime durante la consulta
+    data_cursor = mongo_sensors_data_collection.find(
+        {'location': location, 'parameters.id': parameter_id},
+        {'parameters.$': 1, '_id': 0}
+    ).sort('parameters.lastUpdated', 1)
+    print(data_cursor)
+    data_list = []
+
+    for entry in data_cursor:
+        parameter = entry['parameters'][0]
+        value = parameter.get('value', 0)
+        last_updated = parameter.get('lastUpdated', 0)
+        data_list.append({'lastUpdated': last_updated, 'value': value})
+
+    return jsonify(data_list)
+def consume_message():
+    try:
+        msg = consumer.poll(1.0)
+        if msg is not None and not msg.error():
+            topic = msg.topic()
+            data = json.loads(msg.value().decode('utf-8'))
+            if isinstance(data, dict):
+                cons_logger.info("Datos recibidos del tema {}: {}".format(topic, data))
+                data['_topic'] = topic  # Añadir el topic al diccionario
+                return data
+            else:
+                cons_logger.warning("Datos no válidos recibidos del tema {}: {}".format(topic, data))
+    except Exception as e:
+        cons_logger.error(f"Error al procesar mensaje de Kafka: {e}")
+    return None
+
+
+def generate_filtered_device(data):
+    return {
+        'id': data.get('id'),
+        'name': data.get('name'),
+        'country': data.get('country'),
+        'lastUpdated': data.get('lastUpdated'),
+        'parameters': [
+            param for param in data.get('parameters', [])
+            if param.get('id') in [1, 2, 135]  # Filtrar por ID 1, 2 y 135
+        ],
+        'coordinates': data.get('coordinates')
+    }
+
+
+def generate_filtered_data(data):
+    return {
+        'location': data.get('location'),
+        'country': data.get('country'),
+        'parameters': [
+            {
+                'id': param.get('parameter'),  # Usar 'parameter' en lugar de 'id' si es el campo correcto
+                'value': param.get('value'),
+                'unit': param.get('unit'),
+                'lastUpdated': param.get('lastUpdated')
+            }
+            for param in data.get('measurements', [])  # Ajustar al nombre correcto de los datos de 'my_sensors'
+        ],
+        'coordinates': data.get('coordinates')
+    }
+
+
+def background_thread():
+    try:
+        while True:
+            data = consume_message()
+            if data is not None:
+                socketio.emit('air_quality_data', data)
+                handle_devices(data)
+                socketio.sleep(1)
+    except Exception as e:
+        cons_logger.error(f"Error en el hilo principal: {e}")
+
+
+def get_available_fields():
+    # Devolver las opciones específicas para los ejes X e Y
+    return ['name', 'lastUpdated', 'country', 'lastValue(pm10)', 'lastValue(pm25)', 'lastValue(um100)']
 def handle_devices(data):
     topic = data.get('_topic')  # Obtener el topic
     app_logger.info(f"Manejando datos de '{topic}'")
