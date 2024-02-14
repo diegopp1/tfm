@@ -225,7 +225,7 @@ def graph_mysensors():
         y_axis_field = request.form.get('y-axis-field')
 
         # Lista de parámetros que quieres incluir en la gráfica
-        y_parameters = ['pm10', 'pm25', 'um100']
+        y_parameters = ['pm10', 'pm25', 'o3', 'no2', 'so2', 'co']
 
         # Obtener los datos relevantes de la colección
         data_cursor = mongo_sensors_data_collection.find({}, {'location': 1, 'parameters': 1, '_id': 0})
@@ -269,7 +269,7 @@ def get_graph_data():
     # Lista de parámetros que quieres incluir en la gráfica
     y_parameters = ['pm10', 'pm25', 'o3', 'no2', 'so2', 'co']
     print(f"Selected X-axis: {x_axis_field}, Y-axis: {y_axis_field}")
-    # Si el eje X es 'country' y el eje Y es pm10, pm25 o um100
+    # Si el eje X es 'country' y el eje Y es pm10, pm25, o3, no2, so2 o co, calcular el promedio por país
     if x_axis_field == 'country' and any(y_axis_field.endswith(f'({param})') for param in y_parameters):
         averages_by_country = calculate_average_by_country(mongo_locations_collection)
         print(averages_by_country)
@@ -403,7 +403,7 @@ def background_thread():
 
 def get_available_fields():
     # Devolver las opciones específicas para los ejes X e Y
-    return ['name', 'lastUpdated', 'country', 'lastValue(pm10)', 'lastValue(pm25)', 'lastValue(um100)']
+    return ['name', 'lastUpdated', 'country', 'lastValue(pm10)', 'lastValue(pm25)', 'lastValue(o3)', 'lastValue(no2)', 'lastValue(so2)', 'lastValue(co)']
 def handle_devices(data):
     topic = data.get('_topic')  # Obtener el topic
     app_logger.info(f"Manejando datos de '{topic}'")
@@ -499,14 +499,17 @@ def calculate_average_by_country(collection):
     # Inicializar un diccionario para almacenar las medias por país
     averages_by_country = {}
 
-    # Iterar sobre cada país y calcular la media para pm10, pm25 y um100
+    # Iterar sobre cada país y calcular la media para pm10, pm25, o3, no2, so2 y co
     for country in unique_countries:
         country_data = collection.find({'country': country}, {'parameters': 1, '_id': 0})
 
-        # Inicializar listas para almacenar valores de pm10, pm25 y um100 para el país actual
+        # Inicializar listas para almacenar valores de pm10, pm25, o3, no2, so2 y co para el país actual
         pm10_values = []
         pm25_values = []
-        um100_values = []
+        o3_values = []
+        no2_values = []
+        so2_values = []
+        co_values = []
 
         # Iterar sobre los documentos del país actual
         for entry in country_data:
@@ -519,19 +522,31 @@ def calculate_average_by_country(collection):
                     pm10_values.append(last_value)
                 elif parameter == 'pm25':
                     pm25_values.append(last_value)
-                elif parameter == 'um100':
-                    um100_values.append(last_value)
+                elif parameter == 'o3':
+                    o3_values.append(last_value)
+                elif parameter == 'no2':
+                    no2_values.append(last_value)
+                elif parameter == 'so2':
+                    so2_values.append(last_value)
+                elif parameter == 'co':
+                    co_values.append(last_value)
 
-        # Calcular la media para pm10, pm25 y um100
+        # Calcular la media para pm10, pm25, o3, no2, so2 y co
         pm10_average = mean(pm10_values) if pm10_values else 0
         pm25_average = mean(pm25_values) if pm25_values else 0
-        um100_average = mean(um100_values) if um100_values else 0
+        o3_average = mean(o3_values) if o3_values else 0
+        no2_average = mean(no2_values) if no2_values else 0
+        so2_average = mean(so2_values) if so2_values else 0
+        co_average = mean(co_values) if co_values else 0
 
         # Almacenar las medias en el diccionario
         averages_by_country[country] = {
             'pm10_average': pm10_average,
             'pm25_average': pm25_average,
-            'um100_average': um100_average
+            'o3_average': o3_average,
+            'no2_average': no2_average,
+            'so2_average': so2_average,
+            'co_average': co_average
         }
 
     return averages_by_country
@@ -564,7 +579,10 @@ def get_averages_with_coordinates(collection):
             averages_with_coordinates[country] = {
                 'pm10_average': averages['pm10_average'],
                 'pm25_average': averages['pm25_average'],
-                'um100_average': averages['um100_average'],
+                'o3_average': averages['o3_average'],
+                'no2_average': averages['no2_average'],
+                'so2_average': averages['so2_average'],
+                'co_average': averages['co_average'],
                 'location': {'lat': coordinates.get('latitude'), 'lon': coordinates.get('longitude')}
             }
         else:
