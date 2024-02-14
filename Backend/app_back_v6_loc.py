@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, redirect, url_for, Response
 from flask_socketio import SocketIO, emit
@@ -105,6 +106,7 @@ def generate_data():
         selected_country = request.form.get('country')
         start_second_producer(selected_country)
         app_logger.info('Conectado')
+        time.sleep(10)
         return redirect(url_for('index'))
     except Exception as e:
         # Manejar la excepción aquí, puedes registrarla o hacer algo más según tus necesidades
