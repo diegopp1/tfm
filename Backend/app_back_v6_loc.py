@@ -395,7 +395,6 @@ def background_thread():
         while True:
             data = consume_message()
             if data is not None:
-                socketio.emit('air_quality_data', data)
                 handle_devices(data)
                 socketio.sleep(1)
     except Exception as e:
