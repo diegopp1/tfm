@@ -105,7 +105,9 @@
                                 <select id="y-axis-field" name="y-axis-field">
                                     <option value="lastValue(pm10)">pm10</option>
                                     <option value="lastValue(pm25)">pm25</option>
-                                    <option value="lastValue(um100)">um100</option>
+                                    <option value="lastValue(o3)">o3</option>
+                                    <option value="lastValue(no2)">no2</option>
+                                    <option value="lastValue(so2)">so2</option>
                                 </select>
                             </div>
                         </div>
@@ -162,9 +164,12 @@
                         const yValues = Object.values(data).map(countryData => countryData[paramName + '_average']);
 
                         const thresholds = {
-                            pm10: 20,
-                            pm25: 10,
-                            um100: 0.01
+                            pm10: 20, // Particulate Matter less than 10 micrometers in diameter (µg/m³) for a period of a year
+                            pm25: 10, // Particulate Matter less than 2.5 micrometers in diameter (µg/m³) for a period of a year
+                            o3: 60, // Ozone mass concentration (µg/m³) for an 8-hour period
+                            no2: 10, // Nitrogen Dioxide mass concentration (µg/m³) for a period of a year
+                            so2: 40, // Sulfur Dioxide mass concentration (µg/m³) for a period of a year
+                            co: 4, // Carbon Monoxide mass concentration (mg/m³) for a period of a year
                         };
 
                         const trace = {
@@ -189,9 +194,12 @@
                         const yValues = Array.isArray(data) ? data.map(entry => entry[yAxisField]) : [data[yAxisField]];
                         const paramName = yAxisField.match(/\(([^)]+)\)/)[1];
                         const thresholds = {
-                            pm10: 50, // Acorde a la OMS para un periodo de 24 horas
-                            pm25: 25,
-                            um100: 0.01
+                            pm10: 50, // Particulate Matter less than 10 micrometers in diameter (µg/m³) for a period of 24h
+                            pm25: 25, // Particulate Matter less than 2.5 micrometers in diameter (µg/m³) for a period of 24h
+                            o3: 60, // Ozone mass concentration (µg/m³) for an 8-hour period
+                            no2: 10, // Nitrogen Dioxide mass concentration (µg/m³) for a period of a year
+                            so2: 40, // Sulfur Dioxide mass concentration (µg/m³) for a period of a year
+                            co: 4, // Carbon Monoxide mass concentration (mg/m³) for a period of a year
                         };
 
                         const trace = {

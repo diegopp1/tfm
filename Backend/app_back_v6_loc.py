@@ -267,7 +267,7 @@ def get_graph_data():
     x_axis_field = request.form.get('x-axis-field')
     y_axis_field = request.form.get('y-axis-field')
     # Lista de parámetros que quieres incluir en la gráfica
-    y_parameters = ['pm10', 'pm25', 'um100']
+    y_parameters = ['pm10', 'pm25', 'o3', 'no2', 'so2', 'co']
     print(f"Selected X-axis: {x_axis_field}, Y-axis: {y_axis_field}")
     # Si el eje X es 'country' y el eje Y es pm10, pm25 o um100
     if x_axis_field == 'country' and any(y_axis_field.endswith(f'({param})') for param in y_parameters):
@@ -367,7 +367,7 @@ def generate_filtered_device(data):
         'lastUpdated': data.get('lastUpdated'),
         'parameters': [
             param for param in data.get('parameters', [])
-            if param.get('id') in [1, 2, 135]  # Filtrar por ID 1, 2 y 135
+            if param.get('id') in [1, 2, 3, 4, 5, 6]  # Filtrar por ID 1, 2, 3, 4, 5, 6
         ],
         'coordinates': data.get('coordinates')
     }
