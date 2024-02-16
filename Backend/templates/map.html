@@ -172,19 +172,28 @@
             var thresholds = {
                 pm10: 20,
                 pm25: 10,
-                um100: 0.01
+                o3: 50,
+                no2: 40,
+                so2: 20,
+                co: 4
             };
 
             if (
                 (countryData.pm10_average || 0) > thresholds.pm10 ||
                 (countryData.pm25_average || 0) > thresholds.pm25 ||
-                (countryData.um100_average || 0) > thresholds.um100
+                (countryData.o3_average || 0) > thresholds.o3 ||
+                (countryData.no2_average || 0) > thresholds.no2 ||
+                (countryData.so2_average || 0) > thresholds.so2 ||
+                (countryData.co_average || 0) > thresholds.co
             ) {
                 return 'red';
             } else if (
                 (countryData.pm10_average || 0) > thresholds.pm10 / 2 ||
                 (countryData.pm25_average || 0) > thresholds.pm25 / 2 ||
-                (countryData.um100_average || 0) > thresholds.um100 / 2
+                (countryData.o3_average || 0) > thresholds.o3 / 2 ||
+                (countryData.no2_average || 0) > thresholds.no2 / 2 ||
+                (countryData.so2_average || 0) > thresholds.so2 / 2 ||
+                (countryData.co_average || 0) > thresholds.co / 2
             ) {
                 return 'yellow';
             } else {
@@ -196,7 +205,10 @@
             var content = '<b>' + 'Country Avg' + '</b><br>';
             content += 'PM10: ' + (countryData.pm10_average || 0).toFixed(2) + '<br>';
             content += 'PM25: ' + (countryData.pm25_average || 0).toFixed(2) + '<br>';
-            content += 'UM100: ' + (countryData.um100_average || 0).toFixed(4) + '<br>';
+            content += 'o3: ' + (countryData.o3_average || 0).toFixed(4) + '<br>';
+            content += 'no2: ' + (countryData.no2_average || 0).toFixed(2) + '<br>';
+            content += 'so2: ' + (countryData.so2_average || 0).toFixed(2) + '<br>';
+            content += 'co: ' + (countryData.co_average || 0).toFixed(2) + '<br>';
 
             return content;
         }
