@@ -41,7 +41,8 @@ mongo_locations_collection = mongo_db['locations']
 mongo_countries_collection = mongo_db['countries']
 mongo_sensors_collection = mongo_db['my_sensors']
 mongo_sensors_data_collection = mongo_db['my_sensors_data']
-# Crear el consumidor de Kafka
+
+# Kafka Consumer
 consumer = Consumer({
     'bootstrap.servers': 'broker:29092',
     'group.id': 'my_consumer_group',
@@ -85,7 +86,7 @@ def index():
 
     latest_sensor = mongo_air_quality_collection.find_one({}, sort=[('_id', -1)])
     if 'parameters' in latest_sensor:
-        # Convertir 'lastUpdated' para cada parámetro
+        # Convert lastUpdated to a more readable format
         for parameter in latest_sensor['parameters']:
             if 'lastUpdated' in parameter:
                 parameter['lastUpdated'] = datetime.strptime(parameter['lastUpdated'], '%Y-%m-%dT%H:%M:%S%z').strftime(
@@ -109,7 +110,6 @@ def generate_data():
         time.sleep(10)
         return redirect(url_for('index'))
     except Exception as e:
-        # Manejar la excepción aquí, puedes registrarla o hacer algo más según tus necesidades
         app_logger.info(f"Error en la ruta '/generate': {e}")
         return jsonify({'error': 'Se produjo un error al procesar la solicitud'})
 
@@ -125,7 +125,7 @@ def get_map_data():
     return jsonify(averages_with_coordinates)
 @app.route('/data')
 def data():
-    # Eliminar duplicados directamente desde la colección
+    # Eliminating duplicates and displaying the data
     pipeline = [
         {
             '$group': {
@@ -212,10 +212,7 @@ def remove_sensor():
     try:
         sensor_data = request.json
         sensor_id = sensor_data.get('sensorId')
-
-        # Eliminar el sensor de la lista
         mongo_sensors_collection.delete_one({'_id': sensor_id})
-
         return jsonify({'message': 'Sensor eliminado correctamente.'}), 200
     except Exception as e:
         app_logger.error(f"Error al eliminar el sensor: {e}")
@@ -235,16 +232,16 @@ def graph_mysensors():
 
         for entry in data_cursor:
             try:
-                # Crear un nuevo diccionario con los valores específicos
+                # Creating a new dictionary to store the data
                 new_entry = {'location': entry.get('location')}
 
-                # Obtener la última fecha (lastUpdated) para el eje X
+                # Obtaining the last updated date for each sensor
                 last_updated_dates = [datetime.strptime(param.get('lastUpdated', ''), '%Y-%m-%dT%H:%M:%S%z')
                                       for param in entry.get('parameters', []) if param.get('id') in y_parameters]
 
                 new_entry['lastUpdated'] = max(last_updated_dates).strftime('%Y-%m-%d %H:%M:%S')
 
-                # Agregar los valores de cada parámetro al diccionario
+                # Aggregating the values for each parameter
                 for param_id in y_parameters:
                     value = next(
                         (param.get('value') for param in entry.get('parameters', []) if param.get('id') == param_id), 0)
@@ -254,29 +251,27 @@ def graph_mysensors():
             except KeyError as e:
                 print(f"KeyError: {e} - Ignorando la entrada sin el valor correspondiente.")
 
-        # Renderizar la plantilla HTML y pasar los datos a la misma
         return render_template('sensor_chart.html', data_list=data_list)
 
-    # Si se recibe una solicitud GET, puedes manejarla según tus necesidades
     return render_template('sensor_chart.html')
 @app.route('/graph')
 def graph():
-    # Obtener los campos disponibles para los ejes X e Y
+    # Get available fields from the database
     available_fields = get_available_fields()
     return render_template('graph.html', available_fields=available_fields)
 @app.route('/get_graph_data', methods=['POST'])
 def get_graph_data():
     x_axis_field = request.form.get('x-axis-field')
     y_axis_field = request.form.get('y-axis-field')
-    # Lista de parámetros que quieres incluir en la gráfica
+    # List of parameters to include in the graph
     y_parameters = ['pm10', 'pm25', 'o3', 'no2', 'so2', 'co']
     print(f"Selected X-axis: {x_axis_field}, Y-axis: {y_axis_field}")
-    # Si el eje X es 'country' y el eje Y es pm10, pm25, o3, no2, so2 o co, calcular el promedio por país
+    # If the X-axis is 'country' and the Y-axis is pm10, pm25, o3, no2, so2 or co, return the average value for each 'country'
     if x_axis_field == 'country' and any(y_axis_field.endswith(f'({param})') for param in y_parameters):
         averages_by_country = calculate_average_by_country(mongo_locations_collection)
         print(averages_by_country)
         return jsonify(averages_by_country)
-    # Si el eje X es 'name', proceder con la lógica original
+    # If the X-axis is 'name' and the Y-axis is pm10, pm25, o3, no2, so2 or co, return the latest value for each 'name'
     elif x_axis_field == 'name':
         # Modify the query to sort by 'lastUpdated' within parameters and return the latest entry for each 'name'
         pipeline = [
@@ -319,9 +314,8 @@ def get_graph_data():
         return jsonify({'error': 'Invalid request. Please select valid axes.'})
 @app.route('/sensor_chart')
 def sensor_chart():
-    # Obtener la lista de sensores disponibles
+    # Get the list of sensors from the database
     sensors_list = list(mongo_sensors_collection.find({}, {'_id': 1, 'location': 1, 'country': 1}))
-
     return render_template('sensor_chart.html', sensors_list=sensors_list)
 
 @app.route('/generate_sensor_chart', methods=['POST'])
@@ -329,14 +323,14 @@ def generate_sensor_chart():
     location = request.form.get('sensor')
     parameter_id = request.form.get('parameter')
     print(f"Sensor: {location}, Parameter: {parameter_id}")
-    # Convertir lastUpdated a formato datetime durante la consulta
+    # Getting the data for the selected sensor and parameter
     data_cursor = mongo_sensors_data_collection.find(
         {'location': location, 'parameters.id': parameter_id},
         {'parameters.$': 1, '_id': 0}
     ).sort('parameters.lastUpdated', 1)
     print(data_cursor)
     data_list = []
-
+    # Extracting the lastUpdated and value for each entry
     for entry in data_cursor:
         parameter = entry['parameters'][0]
         value = parameter.get('value', 0)
@@ -348,12 +342,12 @@ def consume_message():
     try:
         msg = consumer.poll(1.0)
         if msg is not None and not msg.error():
-            topic = msg.topic()
+            topic = msg.topic() # Get the topic of the message
             data = json.loads(msg.value().decode('utf-8'))
             if isinstance(data, dict):
                 cons_logger.info("Datos recibidos del tema {}: {}".format(topic, data))
                 data['_topic'] = topic  # Añadir el topic al diccionario
-                return data
+                return data # Required to commit the message
             else:
                 cons_logger.warning("Datos no válidos recibidos del tema {}: {}".format(topic, data))
     except Exception as e:
@@ -390,8 +384,6 @@ def generate_filtered_data(data):
         ],
         'coordinates': data.get('coordinates')
     }
-
-
 def background_thread():
     try:
         while True:
@@ -404,24 +396,24 @@ def background_thread():
 
 
 def get_available_fields():
-    # Devolver las opciones específicas para los ejes X e Y
+    # Return the list of available fields for the sensors
     return ['name', 'lastUpdated', 'country', 'lastValue(pm10)', 'lastValue(pm25)', 'lastValue(o3)', 'lastValue(no2)', 'lastValue(so2)', 'lastValue(co)']
 def handle_devices(data):
     topic = data.get('_topic')  # Obtener el topic
     app_logger.info(f"Manejando datos de '{topic}'")
     if topic == 'locations':
-        # Manejar los datos de 'locations'
+        # Manage the data from 'locations'
         filtered_device = generate_filtered_device(data)  # Filtrar los datos del dispositivo
         mongo_locations_collection.insert_one(filtered_device)
 
     elif topic == 'datos':
-        # Manejar los datos de 'datos'
+        # Manage the data from 'datos'
         filtered_data = generate_filtered_data(data)
         # Solo insertar y emitir si hay parámetros después del filtrado
         mongo_air_quality_collection.insert_one(filtered_data)
 
     elif topic == 'my_sensors':
-        # Manejar los datos de 'sensors'
+        # Manage the data from 'my_sensors'
         filtered_sensor = generate_filtered_data(data)
         mongo_sensors_data_collection.insert_one(filtered_sensor)
 
@@ -449,8 +441,6 @@ def start_producer():
         app_logger.info("Productor de Kafka iniciado.")
     else:
         app_logger.info("El productor ya está en ejecución.")
-
-
 def start_second_producer(country):
     if not is_second_producer_running():
         script_path = '/app/Producer (OpenAQ)/kafka-producer-loc.py'
@@ -458,31 +448,25 @@ def start_second_producer(country):
         app_logger.info("Segundo productor de Kafka iniciado.")
     else:
         app_logger.info("El segundo productor ya está en ejecución.")
-
-
 def is_producer_running():
     return False
 
 
 def is_second_producer_running():
     return False
-
-
 @app.route('/start_mysensors_producer', methods=['POST'])
 def mysensors_produce():
-    # Obtén el ID del sensor desde la solicitud
+    # Gets the sensor ID from the request
     sensor_id = request.get_json().get('sensor_id')
 
     try:
-        # Obtén la información del sensor desde MongoDB
+        # Get the sensor information from the database
         sensor_info = mongo_sensors_collection.find_one({"_id": sensor_id})
 
         if sensor_info is not None:
-            # Configuración del productor de Kafka
+            # Kafka producer script path
             kafka_producer_script = "/app/Producer (OpenAQ)/kafka-producer-mysensors.py"
-            # Iniciar el proceso del productor con los argumentos necesarios
             subprocess.Popen(["python", kafka_producer_script, sensor_info['_id']])
-            # Loggear el inicio del productor
             app_logger.info(f"Productor de Kafka iniciado para el sensor {sensor_info['_id']}")
             cons_logger.info(f"Consumidor suscrito al tema 'my_sensors' para el sensor {sensor_info['_id']}")
         else:
@@ -495,13 +479,13 @@ def mysensors_produce():
 
 
 def calculate_average_by_country(collection):
-    # Obtener la lista de países únicos presentes en la colección
+    # Get the unique countries from the collection
     unique_countries = collection.distinct('country')
 
-    # Inicializar un diccionario para almacenar las medias por país
+    # Initialize an empty dictionary to store the averages by country
     averages_by_country = {}
 
-    # Iterar sobre cada país y calcular la media para pm10, pm25, o3, no2, so2 y co
+    # Iterate over the unique countries
     for country in unique_countries:
         country_data = collection.find({'country': country}, {'parameters': 1, '_id': 0})
 
@@ -513,13 +497,12 @@ def calculate_average_by_country(collection):
         so2_values = []
         co_values = []
 
-        # Iterar sobre los documentos del país actual
+        # Iterate over the country data
         for entry in country_data:
             for param in entry.get('parameters', []):
                 parameter = param.get('parameter')
                 last_value = param.get('lastValue', 0)
-
-                # Almacenar valores en las listas correspondientes
+                # Save the last value for each parameter
                 if parameter == 'pm10':
                     pm10_values.append(last_value)
                 elif parameter == 'pm25':
@@ -533,7 +516,7 @@ def calculate_average_by_country(collection):
                 elif parameter == 'co':
                     co_values.append(last_value)
 
-        # Calcular la media para pm10, pm25, o3, no2, so2 y co
+        # Calculate the average for each parameter
         pm10_average = mean(pm10_values) if pm10_values else 0
         pm25_average = mean(pm25_values) if pm25_values else 0
         o3_average = mean(o3_values) if o3_values else 0
@@ -541,7 +524,7 @@ def calculate_average_by_country(collection):
         so2_average = mean(so2_values) if so2_values else 0
         co_average = mean(co_values) if co_values else 0
 
-        # Almacenar las medias en el diccionario
+        # Save the averages for the current country
         averages_by_country[country] = {
             'pm10_average': pm10_average,
             'pm25_average': pm25_average,
@@ -555,7 +538,7 @@ def calculate_average_by_country(collection):
 
 
 def get_averages_with_coordinates(collection):
-    # Obtener la información de coordenadas de cada país desde la colección 'countries'
+    # Get the coordinates for each country
     country_coordinates = {}
     for country_info in mongo_countries_collection.find({}, {'country': 1, 'coordinates': 1, '_id': 0}):
         country_code = country_info['country']
@@ -569,15 +552,14 @@ def get_averages_with_coordinates(collection):
 
     averages_by_country = calculate_average_by_country(collection)
 
-    # Agregar coordenadas a las medias por país
+    # Aggregating the averages with the coordinates
     averages_with_coordinates = {}
     for country, averages in averages_by_country.items():
         coordinates = country_coordinates.get(country, {})
         if coordinates:
             print(f'Coordenadas encontradas para el país {country}: {coordinates}')
             print(f'Averages para el país {country}: {averages}')
-
-            # Agregar todas las medias con coordenadas, independientemente de los umbrales
+            # Aggregating the averages with the coordinates
             averages_with_coordinates[country] = {
                 'pm10_average': averages['pm10_average'],
                 'pm25_average': averages['pm25_average'],
@@ -594,5 +576,5 @@ def get_averages_with_coordinates(collection):
 
 
 if __name__ == '__main__':
-    socketio.start_background_task(target=background_thread)  # Iniciar el hilo de fondo para consumir datos de Kafka
+    socketio.start_background_task(target=background_thread)  # Initialize the background thread for getting data from Kafka
     socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True, use_reloader=False)
