@@ -72,7 +72,7 @@ services:
       - "5000:5000"
     depends_on:
       - broker
-    command: bash -c "sleep 60 && python Backend/app_back_v6_loc.py"
+    command: bash -c "sleep 60 && python Backend/app_back_v6_loc.py" # Waits for Kafka to be ready and initializes the app
 
 networks:
   default:
